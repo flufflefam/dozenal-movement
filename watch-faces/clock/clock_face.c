@@ -36,6 +36,54 @@
 #include "watch_utility.h"
 #include "watch_common_display.h"
 
+static const char dozenal_digits[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'H', 'E' };
+
+// Table at the end of: https://clocks.dozenal.ca/pdf/watch.pdf
+static uint32_t dig1_sec = 2 * 60 * 60;
+static uint32_t dig2_sec = 10 * 60;
+static uint32_t dig3_sec = 50;
+static double dig4_sec = 4 + 1/(double)6;
+//static double dig5_sec = 25 / 72;
+
+// Cannot reliably process mode button presses at 64
+static uint8_t dozenal_tick_frequency = 16;
+
+static void clock_display_dozenal(watch_date_time_t date_time, uint8_t subsecond, clock_display_t current_display) {
+    char buf[11];
+    uint32_t tsec;
+    double tsub;
+    uint8_t dig0 = 0, dig1, dig2, dig3, dig4;
+    uint8_t semidiurnal_adj = 1;
+    if (current_display == CLOCK_DISPLAY_SEMIDIURNAL) {
+        semidiurnal_adj = 2;
+    }
+
+    tsec = (((uint32_t)date_time.unit.hour * 60) + (uint32_t)date_time.unit.minute) * 60 + (uint32_t)date_time.unit.second;
+    dig1 = tsec / (dig1_sec / semidiurnal_adj);
+    tsec = tsec % (dig1_sec / semidiurnal_adj);
+    if (dig1 > 11) {
+        dig0 = 1;
+        dig1 %= 12;
+    }
+    dig0 = 0;
+    dig2 = tsec / (dig2_sec / semidiurnal_adj);
+    tsec = tsec % (dig2_sec / semidiurnal_adj);
+    dig3 = tsec / (dig3_sec / semidiurnal_adj);
+    tsec = tsec % (dig3_sec / semidiurnal_adj);
+    // leftover subseconds
+    tsub = (double)tsec + (double)subsecond / (double)dozenal_tick_frequency;
+    dig4 = tsub / (dig4_sec / semidiurnal_adj);
+    sprintf(buf, " %c%c%c%c ", dozenal_digits[dig1], dozenal_digits[dig2], dozenal_digits[dig3], dozenal_digits[dig4]);
+    if (current_display == CLOCK_DISPLAY_DIURNAL) {
+        sprintf(buf, " %c%c%c%c ", dozenal_digits[dig1], dozenal_digits[dig2], dozenal_digits[dig3], dozenal_digits[dig4]);
+    } else if (current_display == CLOCK_DISPLAY_SEMIDIURNAL) {
+        sprintf(buf, "%c%c%c%c%c ", dozenal_digits[dig0], dozenal_digits[dig1], dozenal_digits[dig2], dozenal_digits[dig3], dozenal_digits[dig4]);
+        //sprintf(buf, "77777%c", dozenal_digits[dig4]);
+    }
+    //watch_display_string(buf, 4);
+    watch_display_text(WATCH_POSITION_BOTTOM, buf);
+}
+
 // 2.4 volts seems to offer adequate warning of a low battery condition?
 // refined based on user reports and personal observations; may need further adjustment.
 #ifndef CLOCK_FACE_LOW_BATTERY_VOLTAGE_THRESHOLD
@@ -161,7 +209,12 @@ static bool clock_display_some(watch_date_time_t current, watch_date_time_t prev
     }
 }
 
-static void clock_display_clock(clock_state_t *state, watch_date_time_t current) {
+static void clock_display_clock(clock_state_t *state, watch_date_time_t current, uint8_t subsecond) {
+    if ((state->current_display == CLOCK_DISPLAY_DIURNAL) || (state->current_display == CLOCK_DISPLAY_SEMIDIURNAL)) {
+        clock_display_dozenal(current, subsecond, state->current_display);
+        return;
+    }
+
     if (!clock_display_some(current, state->date_time.previous)) {
         if (movement_clock_mode_24h() == MOVEMENT_CLOCK_MODE_12H) {
             clock_indicate_pm(current);
@@ -245,12 +298,39 @@ bool clock_face_loop(movement_event_t event, void *context) {
         case EVENT_ACTIVATE:
             current = movement_get_local_date_time();
 
-            clock_display_clock(state, current);
+            clock_display_clock(state, current, event.subsecond);
 
             clock_check_battery_periodically(state, current);
 
             state->date_time.previous = current;
 
+            break;
+        case EVENT_ALARM_BUTTON_UP:
+            // Cycle through decimal/dozenal display modes as listed in clock_display_t
+            state->current_display = (state->current_display + 1) % CLOCK_DISPLAY_NUM_MODES;
+            // Force re-render of all digits as in clock_face_activate()
+            state->date_time.previous.reg = 0xFFFFFFFF;
+            // Adjust tick frequencies & diplay for type of time
+            if (state->current_display == CLOCK_DISPLAY_12H) {
+                movement_request_tick_frequency(1);
+                watch_set_colon();
+                clock_indicate(WATCH_INDICATOR_24H, 0);
+                clock_indicate(WATCH_INDICATOR_PM, clock_is_pm(current));
+            } else if (state->current_display == CLOCK_DISPLAY_24H) {
+                watch_set_colon();
+                clock_indicate(WATCH_INDICATOR_24H, 1);
+                clock_indicate(WATCH_INDICATOR_PM, 0);
+            } else if (state->current_display == CLOCK_DISPLAY_DIURNAL) {
+                movement_request_tick_frequency(dozenal_tick_frequency);
+                watch_clear_colon();
+                clock_indicate(WATCH_INDICATOR_24H, 0);
+                clock_indicate(WATCH_INDICATOR_PM, 0);
+            } else if (state->current_display == CLOCK_DISPLAY_SEMIDIURNAL) {
+                watch_clear_colon();
+                clock_indicate(WATCH_INDICATOR_24H, 0);
+                clock_indicate(WATCH_INDICATOR_PM, 0);
+            }
+            printf("EVENT_ALARM_BUTTON_UP - %d\r\n", state->current_display);
             break;
         case EVENT_ALARM_LONG_PRESS:
             clock_toggle_time_signal(state);

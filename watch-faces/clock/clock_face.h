@@ -43,6 +43,14 @@
 
 #include "movement.h"
 
+typedef enum {
+    CLOCK_DISPLAY_12H,
+    CLOCK_DISPLAY_24H,
+    CLOCK_DISPLAY_DIURNAL,
+    CLOCK_DISPLAY_SEMIDIURNAL,
+    CLOCK_DISPLAY_NUM_MODES,
+} clock_display_t;
+
 typedef struct {
     struct {
         watch_date_time_t previous;
@@ -51,6 +59,7 @@ typedef struct {
     uint8_t watch_face_index;
     bool time_signal_enabled;
     bool battery_low;
+    clock_display_t current_display;
 } clock_state_t;
 
 void clock_face_setup(uint8_t watch_face_index, void ** context_ptr);
