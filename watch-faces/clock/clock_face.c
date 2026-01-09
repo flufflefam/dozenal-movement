@@ -81,7 +81,45 @@ static void clock_display_dozenal(watch_date_time_t date_time, uint8_t subsecond
         //sprintf(buf, "77777%c", dozenal_digits[dig4]);
     }
     //watch_display_string(buf, 4);
-    watch_display_text(WATCH_POSITION_BOTTOM, buf);
+    //watch_display_text(WATCH_POSITION_BOTTOM, buf);
+
+    watch_clear_display();
+
+    //watch_set_pixel(3, 16);
+    watch_set_pixel(2, 16);
+    watch_set_pixel(2, 22);
+    watch_set_pixel(1, 22);
+    watch_set_pixel(0, 16);
+
+    //watch_set_pixel(3, 14);
+    watch_set_pixel(2, 14);
+    watch_set_pixel(2, 15);
+    watch_set_pixel(1, 15);
+    watch_set_pixel(0, 15);
+
+    //watch_set_pixel(3, 1);
+    watch_set_pixel(2, 2);
+    watch_set_pixel(1, 2);
+    watch_set_pixel(1, 1);
+    watch_set_pixel(0, 1);
+
+    //watch_set_pixel(3, 3);
+    watch_set_pixel(2, 4);
+    watch_set_pixel(1, 4);
+    watch_set_pixel(1, 3);
+    watch_set_pixel(0, 3);
+
+    //watch_set_pixel(3, 10);
+    watch_set_pixel(3, 8);
+    watch_set_pixel(2, 5);
+    watch_set_pixel(3, 4);
+    watch_set_pixel(1, 5);
+
+    //watch_set_pixel(3, 6);
+    watch_set_pixel(3, 7);
+    watch_set_pixel(1, 6);
+    watch_set_pixel(0, 6);
+    watch_set_pixel(0, 7);
 }
 
 // 2.4 volts seems to offer adequate warning of a low battery condition?
