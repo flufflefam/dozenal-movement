@@ -36,7 +36,7 @@
 #include "watch_utility.h"
 #include "watch_common_display.h"
 
-static const char dozenal_digits[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'H', 'E' };
+static const char dozenal_digits[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '2', 'E' };
 
 // Table at the end of: https://clocks.dozenal.ca/pdf/watch.pdf
 static uint32_t dig1_sec = 2 * 60 * 60;
@@ -59,71 +59,43 @@ static void clock_display_dozenal(watch_date_time_t date_time, uint8_t subsecond
     }
 
     tsec = (((uint32_t)date_time.unit.hour * 60) + (uint32_t)date_time.unit.minute) * 60 + (uint32_t)date_time.unit.second;
+    dig0 = 0;
     dig1 = tsec / (dig1_sec / semidiurnal_adj);
     tsec = tsec % (dig1_sec / semidiurnal_adj);
     if (dig1 > 11) {
         dig0 = 1;
         dig1 %= 12;
     }
-    dig0 = 7;//0;
-    dig1 = 7;
-    dig2 = 7;//tsec / (dig2_sec / semidiurnal_adj);
-    tsec = 7;//tsec % (dig2_sec / semidiurnal_adj);
-    dig3 = 7;//tsec / (dig3_sec / semidiurnal_adj);
-    tsec = 7;//tsec % (dig3_sec / semidiurnal_adj);
+    dig2 = tsec / (dig2_sec / semidiurnal_adj);
+    tsec = tsec % (dig2_sec / semidiurnal_adj);
+    dig3 = tsec / (dig3_sec / semidiurnal_adj);
+    tsec = tsec % (dig3_sec / semidiurnal_adj);
     // leftover subseconds
     tsub = (double)tsec + (double)subsecond / (double)dozenal_tick_frequency;
     dig4 = tsub / (dig4_sec / semidiurnal_adj);
-    dig4 = 7;
-
-    sprintf(buf, " %c%c%c%c ", dozenal_digits[dig1], dozenal_digits[dig2], dozenal_digits[dig3], dozenal_digits[dig4]);
     if (current_display == CLOCK_DISPLAY_DIURNAL) {
         sprintf(buf, " %c%c%c%c ", dozenal_digits[dig1], dozenal_digits[dig2], dozenal_digits[dig3], dozenal_digits[dig4]);
     } else if (current_display == CLOCK_DISPLAY_SEMIDIURNAL) {
         sprintf(buf, "%c%c%c%c%c ", dozenal_digits[dig0], dozenal_digits[dig1], dozenal_digits[dig2], dozenal_digits[dig3], dozenal_digits[dig4]);
-        //sprintf(buf, "77777%c", dozenal_digits[dig4]);
     }
-    //watch_display_string(buf, 4);
+    // To get 10 as "2 without top bar" first render as 2
     watch_display_text(WATCH_POSITION_BOTTOM, buf);
-/*
-    watch_clear_display();
-
-    //watch_set_pixel(3, 16);
-    watch_set_pixel(2, 16);
-    watch_set_pixel(2, 22);
-    watch_set_pixel(1, 22);
-    watch_set_pixel(0, 16);
-
-    //watch_set_pixel(3, 14);
-    watch_set_pixel(2, 14);
-    watch_set_pixel(2, 15);
-    watch_set_pixel(1, 15);
-    watch_set_pixel(0, 15);
-
-    //watch_set_pixel(3, 1);
-    watch_set_pixel(2, 2);
-    watch_set_pixel(1, 2);
-    watch_set_pixel(1, 1);
-    watch_set_pixel(0, 1);
-
-    //watch_set_pixel(3, 3);
-    watch_set_pixel(2, 4);
-    watch_set_pixel(1, 4);
-    watch_set_pixel(1, 3);
-    watch_set_pixel(0, 3);
-
-    //watch_set_pixel(3, 10);
-    watch_set_pixel(3, 8);
-    watch_set_pixel(2, 5);
-    watch_set_pixel(3, 4);
-    watch_set_pixel(1, 5);
-
-    //watch_set_pixel(3, 6);
-    watch_set_pixel(3, 7);
-    watch_set_pixel(1, 6);
-    watch_set_pixel(0, 6);
-    watch_set_pixel(0, 7);
-*/
+    // Then turn off top bar segments as needed
+    if (dig0 == 10) {
+        watch_clear_pixel(3, 16);
+    }
+    if (dig1 == 10) {
+        watch_clear_pixel(3, 14);
+    }
+    if (dig2 == 10) {
+        watch_clear_pixel(3, 1);
+    }
+    if (dig3 == 10) {
+        watch_clear_pixel(3, 3);
+    }
+    if (dig4 == 10) {
+        watch_clear_pixel(3, 10);
+    }
 }
 
 // 2.4 volts seems to offer adequate warning of a low battery condition?
