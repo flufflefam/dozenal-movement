@@ -65,14 +65,17 @@ static void clock_display_dozenal(watch_date_time_t date_time, uint8_t subsecond
         dig0 = 1;
         dig1 %= 12;
     }
-    dig0 = 0;
-    dig2 = tsec / (dig2_sec / semidiurnal_adj);
-    tsec = tsec % (dig2_sec / semidiurnal_adj);
-    dig3 = tsec / (dig3_sec / semidiurnal_adj);
-    tsec = tsec % (dig3_sec / semidiurnal_adj);
+    dig0 = 7;//0;
+    dig1 = 7;
+    dig2 = 7;//tsec / (dig2_sec / semidiurnal_adj);
+    tsec = 7;//tsec % (dig2_sec / semidiurnal_adj);
+    dig3 = 7;//tsec / (dig3_sec / semidiurnal_adj);
+    tsec = 7;//tsec % (dig3_sec / semidiurnal_adj);
     // leftover subseconds
     tsub = (double)tsec + (double)subsecond / (double)dozenal_tick_frequency;
     dig4 = tsub / (dig4_sec / semidiurnal_adj);
+    dig4 = 7;
+
     sprintf(buf, " %c%c%c%c ", dozenal_digits[dig1], dozenal_digits[dig2], dozenal_digits[dig3], dozenal_digits[dig4]);
     if (current_display == CLOCK_DISPLAY_DIURNAL) {
         sprintf(buf, " %c%c%c%c ", dozenal_digits[dig1], dozenal_digits[dig2], dozenal_digits[dig3], dozenal_digits[dig4]);
@@ -81,8 +84,8 @@ static void clock_display_dozenal(watch_date_time_t date_time, uint8_t subsecond
         //sprintf(buf, "77777%c", dozenal_digits[dig4]);
     }
     //watch_display_string(buf, 4);
-    //watch_display_text(WATCH_POSITION_BOTTOM, buf);
-
+    watch_display_text(WATCH_POSITION_BOTTOM, buf);
+/*
     watch_clear_display();
 
     //watch_set_pixel(3, 16);
@@ -120,6 +123,7 @@ static void clock_display_dozenal(watch_date_time_t date_time, uint8_t subsecond
     watch_set_pixel(1, 6);
     watch_set_pixel(0, 6);
     watch_set_pixel(0, 7);
+*/
 }
 
 // 2.4 volts seems to offer adequate warning of a low battery condition?
