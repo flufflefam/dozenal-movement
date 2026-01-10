@@ -10,6 +10,7 @@
  * Copyright © 2023 Mikhail Svarichevsky <3@14.by>
  * Copyright © 2023 Wesley Aptekar-Cassels <me@wesleyac.com>
  * Copyright © 2024 Matheus Afonso Martins Moreira <matheus.a.m.moreira@gmail.com>
+ * Copyright © 2026 flufflefam <flufflefam@users.noreply.github.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
