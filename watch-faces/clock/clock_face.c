@@ -230,7 +230,7 @@ static void clock_display_clock(clock_state_t *state, watch_date_time_t current,
     }
 
     if (!clock_display_some(current, state->date_time.previous)) {
-        if (movement_clock_mode_24h() == MOVEMENT_CLOCK_MODE_12H) {
+        if (state->current_display == CLOCK_DISPLAY_12H) {
             clock_indicate_pm(current);
             current = clock_24h_to_12h(current);
         }
@@ -344,7 +344,7 @@ bool clock_face_loop(movement_event_t event, void *context) {
                 clock_indicate(WATCH_INDICATOR_24H, 0);
                 clock_indicate(WATCH_INDICATOR_PM, 0);
             }
-            printf("EVENT_ALARM_BUTTON_UP - %d\r\n", state->current_display);
+            //printf("EVENT_ALARM_BUTTON_UP - %d\r\n", state->current_display);
             break;
         case EVENT_ALARM_LONG_PRESS:
             clock_toggle_time_signal(state);
