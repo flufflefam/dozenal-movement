@@ -5,15 +5,19 @@ Dozenal Watch
 
 A work-in-progress [dozenal timekeeping adaptation](https://clocks.dozenal.ca/) of Casio wristwatches with a [Sensor Watch extension board](https://www.sensorwatch.net/).
 
-```
-make BOARD=sensorwatch_pro DISPLAY=custom
-```
-
+Emulator build:
 ```
 emmake make BOARD=sensorwatch_pro DISPLAY=custom
 python3 -m http.server -d build-sim
 ```
----
+
+Firmware build:
+```
+make BOARD=sensorwatch_pro DISPLAY=custom
+```
+
+(Original README below..)
+
 ---
 
 Second Movement
