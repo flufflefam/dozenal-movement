@@ -1,6 +1,8 @@
 Dozenal Watch
 =============
 
+[![Latest Simulator](https://img.shields.io/badge/Simulator-Latest%20Firmware-2ea44f)](https://flufflefam.github.io/dozenal-movement/simulator/firmware.html)
+
 A work-in-progress [dozenal timekeeping adaptation](https://clocks.dozenal.ca/) of Casio wristwatches with a [Sensor Watch extension board](https://www.sensorwatch.net/).
 
 ```
