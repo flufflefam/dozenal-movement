@@ -31,6 +31,14 @@ digit-4 alarm setting or display digit 4 as an alarm value merely because the
 main clock face displays it. Preserve the original alarm's supported precision
 when adapting its controls to other time modes.
 
+The set-time face is another firmware-parity surface. In Dozenal and Semidiurnal modes, group the
+editable digits the same way as the alarm face: digit 1 as the first group (including the
+Semidiurnal leading half-day digit), digits 2 and 3 together as the second group, and digit 4 as
+the third group. The selected group must blink and advance together; do not expose the decimal
+hour, minute, and second fields as independent controls in these modes. The RTC stores whole
+seconds, so digit-4 setting uses the nearest whole-second increment rather than inventing
+fractional persistence.
+
 ## Dozenal Time Reference
 
 Use the following dozenal timekeeping definitions when working on time displays

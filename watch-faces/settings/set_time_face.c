@@ -25,7 +25,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "set_time_face.h"
+#include "clock_face.h"
 #include "watch.h"
+#include "watch_common_display.h"
 #include "watch_utility.h"
 #include "zones.h"
 
@@ -35,6 +37,19 @@ const char set_time_face_fallback_titles[SET_TIME_FACE_NUM_SETTINGS][3] = {"YR",
 
 static bool _quick_ticks_running;
 static int32_t current_offset;
+
+static bool _set_time_face_uses_dozenal(void) {
+    clock_display_t display_mode = clock_face_get_display_mode();
+    return display_mode == CLOCK_DISPLAY_DIURNAL || display_mode == CLOCK_DISPLAY_SEMIDIURNAL;
+}
+
+static uint32_t _set_time_face_time_increment(uint8_t current_page) {
+    clock_display_t display_mode = clock_face_get_display_mode();
+
+    if (current_page == 4) return display_mode == CLOCK_DISPLAY_DIURNAL ? 2 * 60 * 60 : 60 * 60;
+    if (current_page == 5) return display_mode == CLOCK_DISPLAY_DIURNAL ? 50 : 25;
+    return display_mode == CLOCK_DISPLAY_DIURNAL ? 4 : 2;
+}
 
 static void _handle_alarm_button(watch_date_time_t date_time, uint8_t current_page) {
     // handles short or long pressing of the alarm button
@@ -55,13 +70,37 @@ static void _handle_alarm_button(watch_date_time_t date_time, uint8_t current_pa
             date_time.unit.day = (date_time.unit.day % watch_utility_days_in_month(date_time.unit.month, date_time.unit.year + WATCH_RTC_REFERENCE_YEAR)) + 1;
             break;
         case 4: // hour
-            date_time.unit.hour = (date_time.unit.hour + 1) % 24;
+            if (_set_time_face_uses_dozenal()) {
+                uint32_t seconds = (((uint32_t) date_time.unit.hour * 60 + date_time.unit.minute) * 60) + date_time.unit.second;
+                seconds = (seconds + _set_time_face_time_increment(current_page)) % (24 * 60 * 60);
+                date_time.unit.hour = seconds / (60 * 60);
+                date_time.unit.minute = (seconds / 60) % 60;
+                date_time.unit.second = seconds % 60;
+            } else {
+                date_time.unit.hour = (date_time.unit.hour + 1) % 24;
+            }
             break;
         case 5: // minute
-            date_time.unit.minute = (date_time.unit.minute + 1) % 60;
+            if (_set_time_face_uses_dozenal()) {
+                uint32_t seconds = (((uint32_t) date_time.unit.hour * 60 + date_time.unit.minute) * 60) + date_time.unit.second;
+                seconds = (seconds + _set_time_face_time_increment(current_page)) % (24 * 60 * 60);
+                date_time.unit.hour = seconds / (60 * 60);
+                date_time.unit.minute = (seconds / 60) % 60;
+                date_time.unit.second = seconds % 60;
+            } else {
+                date_time.unit.minute = (date_time.unit.minute + 1) % 60;
+            }
             break;
         case 6: // second
-            date_time.unit.second = 0;
+            if (_set_time_face_uses_dozenal()) {
+                uint32_t seconds = (((uint32_t) date_time.unit.hour * 60 + date_time.unit.minute) * 60) + date_time.unit.second;
+                seconds = (seconds + _set_time_face_time_increment(current_page)) % (24 * 60 * 60);
+                date_time.unit.hour = seconds / (60 * 60);
+                date_time.unit.minute = (seconds / 60) % 60;
+                date_time.unit.second = seconds % 60;
+            } else {
+                date_time.unit.second = 0;
+            }
             break;
     }
     movement_set_local_date_time(date_time);
@@ -146,6 +185,12 @@ bool set_time_face_loop(movement_event_t event, void *context) {
         watch_clear_indicator(WATCH_INDICATOR_24H);
         watch_clear_indicator(WATCH_INDICATOR_PM);
         sprintf(buf, "%2d%02d%02d", date_time.unit.year + 20, date_time.unit.month, date_time.unit.day);
+    } else if (_set_time_face_uses_dozenal()) {
+        watch_clear_colon();
+        watch_clear_indicator(WATCH_INDICATOR_24H);
+        watch_clear_indicator(WATCH_INDICATOR_PM);
+        uint32_t seconds = (((uint32_t) date_time.unit.hour * 60 + date_time.unit.minute) * 60) + date_time.unit.second;
+        clock_display_dozenal_duration(seconds, 0, clock_face_get_display_mode(), false);
     } else {
         watch_set_colon();
         if (movement_clock_mode_24h()) {
@@ -158,22 +203,33 @@ bool set_time_face_loop(movement_event_t event, void *context) {
         }
     }
 
-    watch_display_text(WATCH_POSITION_BOTTOM, buf);
+    if (current_page < 3 || !_set_time_face_uses_dozenal()) watch_display_text(WATCH_POSITION_BOTTOM, buf);
 
     // blink up the parameter we're setting
     if (event.subsecond % 2 && !_quick_ticks_running) {
         switch (current_page) {
             case 0:
             case 4:
-                watch_display_text(WATCH_POSITION_HOURS, "  ");
+                if (_set_time_face_uses_dozenal() && current_page >= 4) {
+                    if (clock_face_get_display_mode() == CLOCK_DISPLAY_SEMIDIURNAL) watch_display_character(' ', 4);
+                    watch_display_character(' ', 5);
+                } else {
+                    watch_display_text(WATCH_POSITION_HOURS, "  ");
+                }
                 break;
             case 1:
             case 5:
-                watch_display_text(WATCH_POSITION_MINUTES, "  ");
+                if (_set_time_face_uses_dozenal() && current_page >= 4) {
+                    watch_display_character(' ', 6);
+                    watch_display_character(' ', 7);
+                } else {
+                    watch_display_text(WATCH_POSITION_MINUTES, "  ");
+                }
                 break;
             case 2:
             case 6:
-                watch_display_text(WATCH_POSITION_SECONDS, "  ");
+                if (_set_time_face_uses_dozenal() && current_page >= 4) watch_display_character(' ', 8);
+                else watch_display_text(WATCH_POSITION_SECONDS, "  ");
                 break;
         }
     }
