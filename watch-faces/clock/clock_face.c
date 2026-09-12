@@ -49,8 +49,32 @@ static double dig4_sec = 4 + 1/(double)6;
 // Cannot reliably process mode button presses at 64
 static uint8_t dozenal_tick_frequency = 16;
 
+static void clock_display_dozenal_digit(uint8_t digit, uint8_t position) {
+    if (digit != 10) {
+        watch_display_character(dozenal_digits[digit], position);
+        return;
+    }
+
+    digit_mapping_t segmap = watch_get_lcd_type() == WATCH_LCD_TYPE_CUSTOM ? Custom_LCD_Display_Mapping[position] : Classic_LCD_Display_Mapping[position];
+    uint8_t segdata = 0b01011010;
+
+    for (uint8_t i = 0; i < 8; i++) {
+        if (segmap.segment[i].value != segment_does_not_exist) {
+            uint8_t com = segmap.segment[i].address.com;
+            uint8_t seg = segmap.segment[i].address.seg;
+
+            if (segdata & 1) {
+                watch_set_pixel(com, seg);
+            } else {
+                watch_clear_pixel(com, seg);
+            }
+        }
+
+        segdata >>= 1;
+    }
+}
+
 static void clock_display_dozenal(watch_date_time_t date_time, uint8_t subsecond, clock_display_t current_display) {
-    char buf[11];
     uint32_t tsec;
     double tsub;
     uint8_t dig0 = 0, dig1, dig2, dig3, dig4;
@@ -75,27 +99,19 @@ static void clock_display_dozenal(watch_date_time_t date_time, uint8_t subsecond
     tsub = (double)tsec + (double)subsecond / (double)dozenal_tick_frequency;
     dig4 = tsub / (dig4_sec / semidiurnal_adj);
     if (current_display == CLOCK_DISPLAY_DIURNAL) {
-        sprintf(buf, " %c%c%c%c ", dozenal_digits[dig1], dozenal_digits[dig2], dozenal_digits[dig3], dozenal_digits[dig4]);
+        watch_display_character(' ', 4);
+        clock_display_dozenal_digit(dig1, 5);
+        clock_display_dozenal_digit(dig2, 6);
+        clock_display_dozenal_digit(dig3, 7);
+        clock_display_dozenal_digit(dig4, 8);
+        watch_display_character(' ', 9);
     } else if (current_display == CLOCK_DISPLAY_SEMIDIURNAL) {
-        sprintf(buf, "%c%c%c%c%c ", dozenal_digits[dig0], dozenal_digits[dig1], dozenal_digits[dig2], dozenal_digits[dig3], dozenal_digits[dig4]);
-    }
-    // To get 10 as "2 without top bar" first render as 2
-    watch_display_text(WATCH_POSITION_BOTTOM, buf);
-    // Then turn off top bar segments as needed
-    if (dig0 == 10) {
-        watch_clear_pixel(3, 16);
-    }
-    if (dig1 == 10) {
-        watch_clear_pixel(3, 14);
-    }
-    if (dig2 == 10) {
-        watch_clear_pixel(3, 1);
-    }
-    if (dig3 == 10) {
-        watch_clear_pixel(3, 3);
-    }
-    if (dig4 == 10) {
-        watch_clear_pixel(3, 10);
+        clock_display_dozenal_digit(dig0, 4);
+        clock_display_dozenal_digit(dig1, 5);
+        clock_display_dozenal_digit(dig2, 6);
+        clock_display_dozenal_digit(dig3, 7);
+        clock_display_dozenal_digit(dig4, 8);
+        watch_display_character(' ', 9);
     }
 }
 
