@@ -72,3 +72,6 @@ python3 -m http.server -d build-sim
 ```
 
 Finally, visit [firmware.html](http://localhost:8000/firmware.html) to see your work.
+
+The latest `main` build for the sensorwatch_pro custom display is also available at
+[the hosted simulator](https://flufflefam.github.io/dozenal-movement/simulator/firmware.html).

@@ -5,14 +5,45 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
+  build-simulator:
+    runs-on: ubuntu-latest
+    container:
+      image: emscripten/emsdk
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Ensure workspace directory is defined as safe
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Compile sensorwatch_pro custom simulator
+        run: emmake make BOARD=sensorwatch_pro DISPLAY=custom
+      - name: Upload simulator
+        uses: actions/upload-artifact@v4
+        with:
+          name: sensorwatch-pro-custom-simulator
+          path: |
+            build-sim/firmware.html
+            build-sim/firmware.js
+            build-sim/firmware.wasm
+
   gh-pages:
+    needs: build-simulator
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Doxygen Action
         uses: mattnotmitt/doxygen-action@v1
+      - name: Download simulator
+        uses: actions/download-artifact@v4
+        with:
+          name: sensorwatch-pro-custom-simulator
+          path: docs/simulator
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
