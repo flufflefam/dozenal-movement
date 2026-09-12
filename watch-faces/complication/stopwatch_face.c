@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "stopwatch_face.h"
+#include "clock_face.h"
 #include "watch.h"
 #include "watch_utility.h"
 
@@ -34,6 +35,21 @@
 static const watch_date_time_t distant_future = {
     .unit = {0, 0, 0, 1, 1, 63}
 };
+
+static bool _stopwatch_face_uses_dozenal(void) {
+    clock_display_t display_mode = clock_face_get_display_mode();
+    return display_mode == CLOCK_DISPLAY_DIURNAL || display_mode == CLOCK_DISPLAY_SEMIDIURNAL;
+}
+
+static void _stopwatch_face_display_dozenal_days(uint32_t days) {
+    if (days == 0) {
+        watch_display_text(WATCH_POSITION_TOP_RIGHT, "  ");
+        return;
+    }
+
+    clock_display_dozenal_digit(days / 12, 2);
+    clock_display_dozenal_digit(days % 12, 3);
+}
 
 void stopwatch_face_setup(uint8_t watch_face_index, void ** context_ptr) {
     (void) watch_face_index;
@@ -55,23 +71,34 @@ static void _stopwatch_face_update_display(stopwatch_state_t *stopwatch_state, b
         // display maxes out just shy of 40 days, thanks to the limit on the day digits (0-39)
         stopwatch_state->running = false;
         movement_cancel_background_task();
-        watch_display_text(WATCH_POSITION_TOP_RIGHT, "39");
-        watch_display_text(WATCH_POSITION_BOTTOM, "235959");
+        if (_stopwatch_face_uses_dozenal()) {
+            clock_display_dozenal_duration(24 * 60 * 60 - 1, 0, clock_face_get_display_mode(), true);
+            _stopwatch_face_display_dozenal_days(39);
+        } else {
+            watch_display_text(WATCH_POSITION_TOP_RIGHT, "39");
+            watch_display_text(WATCH_POSITION_BOTTOM, "235959");
+        }
         return;
     }
 
     watch_duration_t duration = watch_utility_seconds_to_duration(stopwatch_state->seconds_counted);
     char buf[14];
 
-    sprintf(buf, "%02d%02d  ", duration.hours, duration.minutes);
-    watch_display_text(WATCH_POSITION_BOTTOM, buf);
+    clock_display_t display_mode = clock_face_get_display_mode();
+    if (_stopwatch_face_uses_dozenal()) {
+        clock_display_dozenal_duration(stopwatch_state->seconds_counted, 0, display_mode, true);
+        _stopwatch_face_display_dozenal_days(duration.days);
+    } else {
+        sprintf(buf, "%02d%02d  ", duration.hours, duration.minutes);
+        watch_display_text(WATCH_POSITION_BOTTOM, buf);
 
-    if (duration.days != 0) {
-        sprintf(buf, "%2d", (uint8_t)duration.days);
-        watch_display_text(WATCH_POSITION_TOP_RIGHT, buf);
+        if (duration.days != 0) {
+            sprintf(buf, "%2d", (uint8_t)duration.days);
+            watch_display_text(WATCH_POSITION_TOP_RIGHT, buf);
+        }
     }
 
-    if (show_seconds) {
+    if (show_seconds && !_stopwatch_face_uses_dozenal()) {
         sprintf(buf, "%02d", duration.seconds);
         watch_display_text(WATCH_POSITION_SECONDS, buf);
     }
@@ -103,7 +130,11 @@ bool stopwatch_face_loop(movement_event_t event, void *context) {
         case EVENT_TICK:
             if (stopwatch_state->start_time.reg == 0) {
                 watch_display_text(WATCH_POSITION_TOP_RIGHT, "  ");
-                watch_display_text(WATCH_POSITION_BOTTOM, "000000");
+                if (_stopwatch_face_uses_dozenal()) {
+                    clock_display_dozenal_duration(0, 0, clock_face_get_display_mode(), true);
+                } else {
+                    watch_display_text(WATCH_POSITION_BOTTOM, "000000");
+                }
             } else {
                 _stopwatch_face_update_display(stopwatch_state, true);
             }
@@ -113,7 +144,11 @@ bool stopwatch_face_loop(movement_event_t event, void *context) {
             if (!stopwatch_state->running) {
                 stopwatch_state->start_time.reg = 0;
                 stopwatch_state->seconds_counted = 0;
-                watch_display_text(WATCH_POSITION_BOTTOM, "000000");
+                if (_stopwatch_face_uses_dozenal()) {
+                    clock_display_dozenal_duration(0, 0, clock_face_get_display_mode(), true);
+                } else {
+                    watch_display_text(WATCH_POSITION_BOTTOM, "000000");
+                }
                 watch_display_text(WATCH_POSITION_TOP_RIGHT, "  ");
             }
             break;

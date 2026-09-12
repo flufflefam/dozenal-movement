@@ -44,12 +44,13 @@ static uint32_t dig1_sec = 2 * 60 * 60;
 static uint32_t dig2_sec = 10 * 60;
 static uint32_t dig3_sec = 50;
 static double dig4_sec = 4 + 1/(double)6;
-//static double dig5_sec = 25 / 72;
+static double dig5_sec = 25 / (double)72;
 
 // Cannot reliably process mode button presses at 64
 static uint8_t dozenal_tick_frequency = 16;
+static clock_display_t clock_display_mode = CLOCK_DISPLAY_12H;
 
-static void clock_display_dozenal_digit(uint8_t digit, uint8_t position) {
+void clock_display_dozenal_digit(uint8_t digit, uint8_t position) {
     if (digit != 10) {
         watch_display_character(dozenal_digits[digit], position);
         return;
@@ -74,16 +75,16 @@ static void clock_display_dozenal_digit(uint8_t digit, uint8_t position) {
     }
 }
 
-static void clock_display_dozenal(watch_date_time_t date_time, uint8_t subsecond, clock_display_t current_display) {
+void clock_display_dozenal_duration(uint32_t seconds, uint8_t subsecond, clock_display_t current_display, bool show_extra_digit) {
     uint32_t tsec;
     double tsub;
-    uint8_t dig0 = 0, dig1, dig2, dig3, dig4;
+    uint8_t dig0 = 0, dig1, dig2, dig3, dig4, dig5;
     uint8_t semidiurnal_adj = 1;
     if (current_display == CLOCK_DISPLAY_SEMIDIURNAL) {
         semidiurnal_adj = 2;
     }
 
-    tsec = (((uint32_t)date_time.unit.hour * 60) + (uint32_t)date_time.unit.minute) * 60 + (uint32_t)date_time.unit.second;
+    tsec = seconds % (24 * 60 * 60);
     dig0 = 0;
     dig1 = tsec / (dig1_sec / semidiurnal_adj);
     tsec = tsec % (dig1_sec / semidiurnal_adj);
@@ -98,21 +99,36 @@ static void clock_display_dozenal(watch_date_time_t date_time, uint8_t subsecond
     // leftover subseconds
     tsub = (double)tsec + (double)subsecond / (double)dozenal_tick_frequency;
     dig4 = tsub / (dig4_sec / semidiurnal_adj);
+    tsub -= dig4 * (dig4_sec / semidiurnal_adj);
+    dig5 = tsub / (dig5_sec / semidiurnal_adj);
     if (current_display == CLOCK_DISPLAY_DIURNAL) {
         watch_display_character(' ', 4);
         clock_display_dozenal_digit(dig1, 5);
         clock_display_dozenal_digit(dig2, 6);
         clock_display_dozenal_digit(dig3, 7);
         clock_display_dozenal_digit(dig4, 8);
-        watch_display_character(' ', 9);
+        if (show_extra_digit) {
+            clock_display_dozenal_digit(dig5, 9);
+        } else {
+            watch_display_character(' ', 9);
+        }
     } else if (current_display == CLOCK_DISPLAY_SEMIDIURNAL) {
         clock_display_dozenal_digit(dig0, 4);
         clock_display_dozenal_digit(dig1, 5);
         clock_display_dozenal_digit(dig2, 6);
         clock_display_dozenal_digit(dig3, 7);
         clock_display_dozenal_digit(dig4, 8);
-        watch_display_character(' ', 9);
+        if (show_extra_digit) {
+            clock_display_dozenal_digit(dig5, 9);
+        } else {
+            watch_display_character(' ', 9);
+        }
     }
+}
+
+static void clock_display_dozenal(watch_date_time_t date_time, uint8_t subsecond, clock_display_t current_display) {
+    uint32_t seconds = (((uint32_t)date_time.unit.hour * 60) + (uint32_t)date_time.unit.minute) * 60 + (uint32_t)date_time.unit.second;
+    clock_display_dozenal_duration(seconds, subsecond, current_display, false);
 }
 
 // 2.4 volts seems to offer adequate warning of a low battery condition?
@@ -298,7 +314,12 @@ void clock_face_setup(uint8_t watch_face_index, void ** context_ptr) {
         clock_state_t *state = (clock_state_t *) *context_ptr;
         state->time_signal_enabled = false;
         state->watch_face_index = watch_face_index;
+        state->current_display = clock_display_mode;
     }
+}
+
+clock_display_t clock_face_get_display_mode(void) {
+    return clock_display_mode;
 }
 
 void clock_face_activate(void *context) {
@@ -339,6 +360,7 @@ bool clock_face_loop(movement_event_t event, void *context) {
         case EVENT_ALARM_BUTTON_UP:
             // Cycle through decimal/dozenal display modes as listed in clock_display_t
             state->current_display = (state->current_display + 1) % CLOCK_DISPLAY_NUM_MODES;
+            clock_display_mode = state->current_display;
             // Force re-render of all digits as in clock_face_activate()
             state->date_time.previous.reg = 0xFFFFFFFF;
             // Adjust tick frequencies & diplay for type of time

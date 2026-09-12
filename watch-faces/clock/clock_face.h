@@ -67,6 +67,9 @@ void clock_face_activate(void *context);
 bool clock_face_loop(movement_event_t event, void *context);
 void clock_face_resign(void *context);
 movement_watch_face_advisory_t clock_face_advise(void *context);
+clock_display_t clock_face_get_display_mode(void);
+void clock_display_dozenal_digit(uint8_t digit, uint8_t position);
+void clock_display_dozenal_duration(uint32_t seconds, uint8_t subsecond, clock_display_t current_display, bool show_extra_digit);
 
 #define clock_face ((const watch_face_t) { \
     clock_face_setup, \

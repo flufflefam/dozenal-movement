@@ -27,6 +27,7 @@
 #include <string.h>
 #include <limits.h>
 #include "fast_stopwatch_face.h"
+#include "clock_face.h"
 #include "watch.h"
 #include "watch_common_display.h"
 #include "watch_utility.h"
@@ -67,6 +68,14 @@ static const uint8_t DISPLAY_RUNNING_RATE_SLOW = 2;
 /// @param ticks
 static void _display_elapsed(fast_stopwatch_state_t *state, uint32_t ticks) {
     char buf[3];
+    uint32_t seconds = ticks >> 7;
+    clock_display_t display_mode = clock_face_get_display_mode();
+
+    if (display_mode == CLOCK_DISPLAY_DIURNAL || display_mode == CLOCK_DISPLAY_SEMIDIURNAL) {
+        clock_display_dozenal_duration(seconds, (ticks & 127) / 8, display_mode, true);
+        watch_display_text(WATCH_POSITION_TOP_RIGHT, "  ");
+        return;
+    }
 
     if (state->slow_refresh && (state->status == SW_STATUS_RUNNING || state->status == SW_STATUS_IDLE)) {
         watch_display_character_lp_seconds(' ', 8);
@@ -77,8 +86,6 @@ static void _display_elapsed(fast_stopwatch_state_t *state, uint32_t ticks) {
         watch_display_character_lp_seconds('0' + sec_100 / 10, 8);
         watch_display_character_lp_seconds('0' + sec_100 % 10, 9);
     }
-
-    uint32_t seconds = ticks >> 7;
 
     if (seconds == state->old_display.seconds) {
         return;
@@ -119,6 +126,7 @@ static void _display_elapsed(fast_stopwatch_state_t *state, uint32_t ticks) {
 static void _draw_indicators(fast_stopwatch_state_t *state, movement_event_t event, uint32_t elapsed) {
     uint8_t subsecond;
     bool tock;
+    bool dozenal_mode = clock_face_get_display_mode() == CLOCK_DISPLAY_DIURNAL || clock_face_get_display_mode() == CLOCK_DISPLAY_SEMIDIURNAL;
 
     switch (state->status) {
         case SW_STATUS_RUNNING:
@@ -126,7 +134,7 @@ static void _draw_indicators(fast_stopwatch_state_t *state, movement_event_t eve
             tock = subsecond >= 64;
 
             watch_clear_indicator(WATCH_INDICATOR_LAP);
-            if (tock) {
+            if (dozenal_mode || tock) {
                 watch_clear_colon();
             } else {
                 watch_set_colon();
@@ -137,7 +145,7 @@ static void _draw_indicators(fast_stopwatch_state_t *state, movement_event_t eve
         case SW_STATUS_RUNNING_LAPPING:
             tock = event.subsecond > 0;
 
-            if (tock) {
+            if (dozenal_mode || tock) {
                 watch_clear_indicator(WATCH_INDICATOR_LAP);
                 watch_clear_colon();
             } else {
@@ -149,7 +157,11 @@ static void _draw_indicators(fast_stopwatch_state_t *state, movement_event_t eve
 
         case SW_STATUS_STOPPED_LAPPING:
             watch_set_indicator(WATCH_INDICATOR_LAP);
-            watch_set_colon();
+            if (dozenal_mode) {
+                watch_clear_colon();
+            } else {
+                watch_set_colon();
+            }
 
             return;
 
@@ -157,7 +169,11 @@ static void _draw_indicators(fast_stopwatch_state_t *state, movement_event_t eve
         case SW_STATUS_IDLE:
         default:
             watch_clear_indicator(WATCH_INDICATOR_LAP);
-            watch_set_colon();
+            if (dozenal_mode) {
+                watch_clear_colon();
+            } else {
+                watch_set_colon();
+            }
             return;
     }
 }
