@@ -1,5 +1,21 @@
 # Agent Instructions
 
+## Environment Setup
+
+Before building or running firmware checks, verify that the GNU Arm Embedded
+Toolchain is installed and that all git submodules are initialized. If the
+toolchain is missing on Debian or Ubuntu, install it with:
+
+```sh
+apt install gcc-arm-none-eabi
+```
+
+If submodules are missing or uninitialized, fetch them with:
+
+```sh
+git submodule update --init --recursive
+```
+
 ## Project Aim
 
 This project aims to reproduce the original Casio F-91W firmware, including
