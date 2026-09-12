@@ -26,28 +26,124 @@
 #include <stdlib.h>
 #include <string.h>
 #include "alarm_face.h"
+#include "clock_face.h"
 #include "watch.h"
+#include "watch_common_display.h"
 #include "watch_utility.h"
 
 //
 // Private
 //
 
-static void _alarm_face_display_alarm_time(alarm_face_state_t *state) {
-    uint8_t hour = state->hour;
+static bool _alarm_face_is_dozenal_mode(void) {
+    clock_display_t display_mode = clock_face_get_display_mode();
+    return display_mode == CLOCK_DISPLAY_DIURNAL || display_mode == CLOCK_DISPLAY_SEMIDIURNAL;
+}
 
-    if ( movement_clock_mode_24h() )
+static uint32_t _alarm_face_third_digit_increment(void) {
+    return clock_face_get_display_mode() == CLOCK_DISPLAY_DIURNAL ? 50 : 25;
+}
+
+static void _alarm_face_normalize_time(alarm_face_state_t *state) {
+    if (!_alarm_face_is_dozenal_mode()) {
+        state->second = 0;
+        return;
+    }
+
+    state->second = (state->second / _alarm_face_third_digit_increment()) * _alarm_face_third_digit_increment();
+}
+
+static void _alarm_face_display_alarm_time(alarm_face_state_t *state) {
+    clock_display_t display_mode = clock_face_get_display_mode();
+    _alarm_face_normalize_time(state);
+
+    watch_clear_indicator(WATCH_INDICATOR_24H);
+    watch_clear_indicator(WATCH_INDICATOR_PM);
+
+    if (display_mode == CLOCK_DISPLAY_DIURNAL || display_mode == CLOCK_DISPLAY_SEMIDIURNAL) {
+        uint32_t seconds = (((uint32_t) state->hour * 60 + state->minute) * 60) + state->second;
+        watch_clear_colon();
+        clock_display_dozenal_duration(seconds, 0, display_mode, false);
+        watch_display_character(' ', 8);
+        return;
+    }
+
+    uint8_t hour = state->hour;
+    if (display_mode == CLOCK_DISPLAY_24H) {
         watch_set_indicator(WATCH_INDICATOR_24H);
-    else {
-        if ( hour >= 12 ) watch_set_indicator(WATCH_INDICATOR_PM);
-        else watch_clear_indicator(WATCH_INDICATOR_PM);
+    } else {
+        if (hour >= 12) watch_set_indicator(WATCH_INDICATOR_PM);
         hour = hour % 12 ? hour % 12 : 12;
     }
 
     static char lcdbuf[7];
     sprintf(lcdbuf, "%2d%02d  ", hour, state->minute);
 
+    watch_set_colon();
     watch_display_text(WATCH_POSITION_BOTTOM, lcdbuf);
+}
+
+static void _alarm_face_advance_time(alarm_face_state_t *state, uint32_t seconds) {
+    uint32_t alarm_seconds = (((uint32_t) state->hour * 60 + state->minute) * 60) + state->second;
+    alarm_seconds = (alarm_seconds + seconds) % (24 * 60 * 60);
+    state->hour = alarm_seconds / (60 * 60);
+    state->minute = (alarm_seconds / 60) % 60;
+    state->second = alarm_seconds % 60;
+}
+
+static uint32_t _alarm_face_hour_increment(void) {
+    clock_display_t display_mode = clock_face_get_display_mode();
+    if (display_mode == CLOCK_DISPLAY_DIURNAL) return 2 * 60 * 60;
+    return 60 * 60;
+}
+
+static uint32_t _alarm_face_minute_increment(void) {
+    clock_display_t display_mode = clock_face_get_display_mode();
+    if (display_mode == CLOCK_DISPLAY_DIURNAL) return 50;
+    if (display_mode == CLOCK_DISPLAY_SEMIDIURNAL) return 25;
+    return 60;
+}
+
+static void _alarm_face_schedule_next_alarm(alarm_face_state_t *state) {
+    if (!state->alarm_is_on) {
+        movement_cancel_background_task_for_face(state->watch_face_index);
+        return;
+    }
+
+    _alarm_face_normalize_time(state);
+
+    watch_date_time_t now = movement_get_local_date_time();
+    watch_date_time_t target = now;
+    target.unit.hour = state->hour;
+    target.unit.minute = state->minute;
+    target.unit.second = state->second;
+
+    uint32_t now_timestamp = watch_utility_date_time_to_unix_time(now, 0);
+    uint32_t target_timestamp = watch_utility_date_time_to_unix_time(target, 0);
+    if (target_timestamp <= now_timestamp) {
+        target = watch_utility_date_time_from_unix_time(now_timestamp + 24 * 60 * 60, 0);
+        target.unit.hour = state->hour;
+        target.unit.minute = state->minute;
+        target.unit.second = state->second;
+    }
+
+    movement_schedule_background_task_for_face(state->watch_face_index, target);
+}
+
+static void _alarm_face_blink_setting(alarm_face_state_t *state) {
+    if (_alarm_face_is_dozenal_mode()) {
+        if (state->setting_mode == ALARM_FACE_SETTING_MODE_SETTING_MINUTE) {
+            watch_display_character(' ', 6);
+            watch_display_character(' ', 7);
+        } else if (state->setting_mode == ALARM_FACE_SETTING_MODE_SETTING_HOUR) {
+            if (clock_face_get_display_mode() == CLOCK_DISPLAY_SEMIDIURNAL) {
+                watch_display_character(' ', 4);
+            }
+            watch_display_character(' ', 5);
+        }
+    } else {
+        watch_display_text((state->setting_mode == ALARM_FACE_SETTING_MODE_SETTING_HOUR) ? WATCH_POSITION_HOURS : WATCH_POSITION_MINUTES, "  ");
+    }
 }
 
 static inline void button_beep() {
@@ -66,6 +162,7 @@ void alarm_face_setup(uint8_t watch_face_index, void **context_ptr) {
         *context_ptr = malloc(sizeof(alarm_face_state_t));
         alarm_face_state_t *state = (alarm_face_state_t *)*context_ptr;
         memset(*context_ptr, 0, sizeof(alarm_face_state_t));
+        state->watch_face_index = watch_face_index;
 
         // default to an 8:00 AM alarm time.
         state->hour = 8;
@@ -88,6 +185,7 @@ bool alarm_face_loop(movement_event_t event, void *context) {
             watch_display_text_with_fallback(WATCH_POSITION_TOP_LEFT, "ALM", "AL");
             if (state->alarm_is_on) watch_set_indicator(WATCH_INDICATOR_SIGNAL);
             watch_set_colon();
+            _alarm_face_schedule_next_alarm(state);
             _alarm_face_display_alarm_time(state);
             break;
         case EVENT_TICK:
@@ -97,8 +195,7 @@ bool alarm_face_loop(movement_event_t event, void *context) {
 
             // but in settings mode, we need to blink up the parameter we're setting.
             _alarm_face_display_alarm_time(state);
-            if (event.subsecond % 2 == 0) 
-                watch_display_text((state->setting_mode == ALARM_FACE_SETTING_MODE_SETTING_HOUR) ? WATCH_POSITION_HOURS : WATCH_POSITION_MINUTES, "  ");
+            if (event.subsecond % 2 == 0) _alarm_face_blink_setting(state);
             break;
         case EVENT_LIGHT_BUTTON_DOWN:
             switch (state->setting_mode) {
@@ -111,17 +208,17 @@ bool alarm_face_loop(movement_event_t event, void *context) {
                     state->setting_mode = ALARM_FACE_SETTING_MODE_SETTING_MINUTE;
                     break;
                 case ALARM_FACE_SETTING_MODE_SETTING_MINUTE:
-                    // If we're setting the minute, advance back to normal mode and cancel fast tick.
                     state->setting_mode = ALARM_FACE_SETTING_MODE_NONE;
-                    movement_request_tick_frequency(1);
-                    // beep to confirm setting.
-                    button_beep();
-                    // also turn the alarm on since they just set it.
-                    state->alarm_is_on = 1;
-                    movement_set_alarm_enabled(true);
-                    watch_set_indicator(WATCH_INDICATOR_SIGNAL);
-                    _alarm_face_display_alarm_time(state);
                     break;
+            }
+            if (state->setting_mode == ALARM_FACE_SETTING_MODE_NONE) {
+                movement_request_tick_frequency(1);
+                button_beep();
+                state->alarm_is_on = 1;
+                movement_set_alarm_enabled(true);
+                watch_set_indicator(WATCH_INDICATOR_SIGNAL);
+                _alarm_face_schedule_next_alarm(state);
+                _alarm_face_display_alarm_time(state);
             }
             break;
         case EVENT_ALARM_BUTTON_UP:
@@ -131,9 +228,11 @@ bool alarm_face_loop(movement_event_t event, void *context) {
                 if ( state->alarm_is_on ) {
                     watch_set_indicator(WATCH_INDICATOR_SIGNAL);
                     movement_set_alarm_enabled(true);
+                    _alarm_face_schedule_next_alarm(state);
                 } else {
                     watch_clear_indicator(WATCH_INDICATOR_SIGNAL);
                     movement_set_alarm_enabled(false);
+                    movement_cancel_background_task_for_face(state->watch_face_index);
                 }
             }
             break;
@@ -143,12 +242,10 @@ bool alarm_face_loop(movement_event_t event, void *context) {
                     // nothing to do here, alarm toggle is handled in EVENT_ALARM_BUTTON_UP.
                     break;
                 case ALARM_FACE_SETTING_MODE_SETTING_HOUR:
-                    // increment hour, wrap around to 0 at 23.
-                    state->hour = (state->hour + 1) % 24;
+                    _alarm_face_advance_time(state, _alarm_face_hour_increment());
                     break;
                 case ALARM_FACE_SETTING_MODE_SETTING_MINUTE:
-                    // increment minute, wrap around to 0 at 59.
-                    state->minute = (state->minute + 1) % 60;
+                    _alarm_face_advance_time(state, _alarm_face_minute_increment());
                     break;
             }
             _alarm_face_display_alarm_time(state);
@@ -163,6 +260,7 @@ bool alarm_face_loop(movement_event_t event, void *context) {
             break;
         case EVENT_BACKGROUND_TASK:
             movement_play_alarm();
+            _alarm_face_schedule_next_alarm(state);
                 // 2022-07-23: Thx @joeycastillo for the dedicated “alarm” signal
             break;
         case EVENT_TIMEOUT:
@@ -183,15 +281,7 @@ movement_watch_face_advisory_t alarm_face_advise(void *context) {
     movement_watch_face_advisory_t retval = { 0 };
 
     if ( state->alarm_is_on ) {
-        watch_date_time_t now = movement_get_local_date_time();
-        retval.wants_background_task = (state->hour==now.unit.hour && state->minute==now.unit.minute);
-        // We’re at the mercy of the advise handler
-        // In Safari, the emulator triggers at the ›end‹ of the minute
-        // Converting to Unix timestamps and taking a difference between now and wake
-        // is not an easy win — because the timestamp for wake has to rely on now
-        // for its date. So first we’d have to see if the TOD of wake is after that
-        // of now. If it is, take tomorrow’s date, calculating month and year rollover
-        // if need be.
+        _alarm_face_schedule_next_alarm(state);
     }
 
     return retval;

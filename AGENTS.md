@@ -22,6 +22,15 @@ This project aims to reproduce the original Casio F-91W firmware, including
 the same clock faces. In addition to AM/PM, it provides two additional time
 formats: Dozenal and Semidiurnal.
 
+## Original Firmware Parity
+
+Match the original F-91W's capabilities as well as its appearance. For
+example, the original alarm can be set by hour and minute, but not at a
+sub-minute resolution. Therefore, the Dozenal alarm face must not invent a
+digit-4 alarm setting or display digit 4 as an alarm value merely because the
+main clock face displays it. Preserve the original alarm's supported precision
+when adapting its controls to other time modes.
+
 ## Dozenal Time Reference
 
 Use the following dozenal timekeeping definitions when working on time displays

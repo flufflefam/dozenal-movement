@@ -50,8 +50,10 @@ typedef enum {
 } alarm_face_setting_mode_t;
 
 typedef struct {
+    uint8_t watch_face_index;
     uint32_t hour : 5;
     uint32_t minute : 6;
+    uint32_t second : 6;
     uint32_t alarm_is_on : 1;
     alarm_face_setting_mode_t setting_mode : 2;
 } alarm_face_state_t;

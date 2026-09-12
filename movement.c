@@ -140,6 +140,7 @@ void cb_alarm_btn_timeout_interrupt(void);
 void cb_led_timeout_interrupt(void);
 void cb_resign_timeout_interrupt(void);
 void cb_sleep_timeout_interrupt(void);
+void cb_scheduled_task_interrupt(void);
 void cb_buzzer_start(void);
 void cb_buzzer_stop(void);
 
@@ -395,6 +396,34 @@ static void _movement_handle_top_of_minute(void) {
     }
 }
 
+static void _movement_schedule_next_background_task(void) {
+    watch_date_time_t now = watch_rtc_get_date_time();
+    uint32_t now_timestamp = watch_utility_date_time_to_unix_time(now, 0);
+    uint32_t next_timestamp = UINT32_MAX;
+
+    for (uint8_t i = 0; i < MOVEMENT_NUM_FACES; i++) {
+        if (scheduled_tasks[i].reg && scheduled_tasks[i].reg > now.reg) {
+            uint32_t timestamp = watch_utility_date_time_to_unix_time(scheduled_tasks[i], 0);
+            if (timestamp < next_timestamp) next_timestamp = timestamp;
+        }
+    }
+
+    if (next_timestamp == UINT32_MAX) {
+        watch_rtc_disable_comp_callback_no_schedule(SCHEDULED_TASK_TIMEOUT);
+        movement_state.has_scheduled_background_task = false;
+        movement_volatile_state.schedule_next_comp = true;
+        return;
+    }
+
+    watch_rtc_register_comp_callback_no_schedule(
+        cb_scheduled_task_interrupt,
+        watch_rtc_get_counter() + (next_timestamp - now_timestamp) * watch_rtc_get_frequency(),
+        SCHEDULED_TASK_TIMEOUT
+    );
+    movement_state.has_scheduled_background_task = true;
+    movement_volatile_state.schedule_next_comp = true;
+}
+
 static void _movement_handle_scheduled_tasks(void) {
     watch_date_time_t date_time = watch_rtc_get_date_time();
     uint8_t num_active_tasks = 0;
@@ -420,6 +449,7 @@ static void _movement_handle_scheduled_tasks(void) {
     } else {
         _movement_reset_inactivity_countdown();
     }
+    _movement_schedule_next_background_task();
 }
 
 void movement_request_tick_frequency(uint8_t freq) {
@@ -537,6 +567,7 @@ void movement_schedule_background_task_for_face(uint8_t watch_face_index, watch_
     if (date_time.reg > now.reg) {
         movement_state.has_scheduled_background_task = true;
         scheduled_tasks[watch_face_index].reg = date_time.reg;
+        _movement_schedule_next_background_task();
     }
 }
 
@@ -550,6 +581,7 @@ void movement_cancel_background_task_for_face(uint8_t watch_face_index) {
         }
     }
     movement_state.has_scheduled_background_task = other_tasks_scheduled;
+    _movement_schedule_next_background_task();
 }
 
 void movement_request_sleep(void) {
@@ -1535,6 +1567,12 @@ void cb_resign_timeout_interrupt(void) {
 
 void cb_sleep_timeout_interrupt(void) {
     movement_request_sleep();
+}
+
+void cb_scheduled_task_interrupt(void) {
+    movement_volatile_state.subsecond = 0;
+    movement_volatile_state.pending_events |= 1 << EVENT_TICK;
+    if (movement_volatile_state.is_sleeping) movement_volatile_state.exit_sleep_mode = true;
 }
 
 void cb_alarm_btn_extwake(void) {

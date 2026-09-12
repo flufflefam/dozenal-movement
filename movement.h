@@ -150,6 +150,7 @@ typedef enum {
     RESIGN_TIMEOUT,             // Resign active face timeout
     SLEEP_TIMEOUT,              // Low-energy begin timeout
     MINUTE_TIMEOUT,             // Top of the Minute timeout
+    SCHEDULED_TASK_TIMEOUT,     // Scheduled background task timeout
 } movement_timeout_index_t;
 
 typedef enum {
