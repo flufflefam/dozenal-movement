@@ -157,14 +157,21 @@ static void clock_display_dozenal_day(watch_date_time_t date_time) {
 }
 
 static void clock_display_date(watch_date_time_t date_time, clock_display_t current_display) {
+    char date[7];
+
     if (current_display == CLOCK_DISPLAY_DIURNAL || current_display == CLOCK_DISPLAY_SEMIDIURNAL) {
-        clock_display_dozenal_date(date_time);
+        clock_display_dozenal_day(date_time);
+        clock_display_dozenal_value(date_time.unit.year + WATCH_RTC_REFERENCE_YEAR, 4, 4);
+        clock_display_dozenal_value(date_time.unit.month, 2, 8);
         return;
     }
 
-    char date[11];
-    snprintf(date, sizeof(date), "%04d-%02d-%02d", date_time.unit.year + WATCH_RTC_REFERENCE_YEAR, date_time.unit.month, date_time.unit.day);
-    watch_display_text(WATCH_POSITION_FULL, date);
+    char day[3];
+    snprintf(day, sizeof(day), "%02d", date_time.unit.day);
+    snprintf(date, sizeof(date), "%04d%02d", date_time.unit.year + WATCH_RTC_REFERENCE_YEAR, date_time.unit.month);
+    watch_display_text_with_fallback(WATCH_POSITION_TOP_LEFT, watch_utility_get_long_weekday(date_time), watch_utility_get_weekday(date_time));
+    watch_display_text(WATCH_POSITION_TOP_RIGHT, day);
+    watch_display_text(WATCH_POSITION_BOTTOM, date);
 }
 
 static void clock_indicate(watch_indicator_t indicator, bool on);
