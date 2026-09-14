@@ -446,10 +446,10 @@ bool clock_face_loop(movement_event_t event, void *context) {
             state->mode_cycle_pending = true;
             break;
         case EVENT_ALARM_LONG_PRESS:
-            break;
-        case EVENT_ALARM_LONG_UP:
             state->mode_cycle_pending = false;
             clock_show_date(state);
+            break;
+        case EVENT_ALARM_LONG_UP:
             break;
         case EVENT_BACKGROUND_TASK:
             // uncomment this line to snap back to the clock face when the hour signal sounds:
