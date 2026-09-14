@@ -57,6 +57,7 @@ typedef struct {
     uint32_t alarm_is_on : 1;
     alarm_face_setting_mode_t setting_mode : 2;
     bool upper_button_pressed;
+    bool alarm_button_pressed;
     bool alarm_button_repeat_active;
 } alarm_face_state_t;
 

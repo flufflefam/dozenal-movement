@@ -188,6 +188,8 @@ void alarm_face_activate(void *context) {
     alarm_face_state_t *state = (alarm_face_state_t *)context;
     state->setting_mode = ALARM_FACE_SETTING_MODE_NONE;
     state->upper_button_pressed = false;
+    state->alarm_button_pressed = false;
+    state->alarm_button_repeat_active = false;
 }
 void alarm_face_resign(void *context) {
     (void) context;
@@ -229,6 +231,7 @@ bool alarm_face_loop(movement_event_t event, void *context) {
                 case ALARM_FACE_SETTING_MODE_SETTING_HOUR:
                     // If we're setting the hour, advance to minute set mode.
                     state->setting_mode = ALARM_FACE_SETTING_MODE_SETTING_MINUTE;
+                    state->alarm_button_repeat_active = false;
                     break;
                 case ALARM_FACE_SETTING_MODE_SETTING_MINUTE:
                     state->setting_mode = ALARM_FACE_SETTING_MODE_NONE;
@@ -254,6 +257,7 @@ bool alarm_face_loop(movement_event_t event, void *context) {
             break;
         case EVENT_ALARM_BUTTON_UP:
         case EVENT_ALARM_LONG_UP:
+            state->alarm_button_pressed = false;
             state->alarm_button_repeat_active = false;
             if (state->setting_mode == ALARM_FACE_SETTING_MODE_NONE) {
                 if (!movement_time_signal_enabled() && !movement_alarm_enabled()) {
@@ -276,13 +280,14 @@ bool alarm_face_loop(movement_event_t event, void *context) {
             break;
         case EVENT_ALARM_BUTTON_DOWN:
             state->upper_button_pressed = true;
+            state->alarm_button_pressed = true;
             _alarm_face_advance_selected_value(state);
             if (state->setting_mode != ALARM_FACE_SETTING_MODE_NONE) {
                 _alarm_face_display_alarm_time(state);
             }
             break;
         case EVENT_ALARM_LONG_PRESS:
-            if (state->setting_mode != ALARM_FACE_SETTING_MODE_NONE) {
+            if (state->alarm_button_pressed && state->setting_mode != ALARM_FACE_SETTING_MODE_NONE) {
                 state->alarm_button_repeat_active = true;
             }
             break;
