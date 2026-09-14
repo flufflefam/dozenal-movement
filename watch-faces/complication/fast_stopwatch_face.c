@@ -330,6 +330,19 @@ bool fast_stopwatch_face_loop(movement_event_t event, void *context) {
 
     rtc_counter_t counter = watch_rtc_get_counter();
 
+    if (
+        event.event_type == EVENT_LIGHT_BUTTON_DOWN ||
+        event.event_type == EVENT_LIGHT_BUTTON_UP ||
+        event.event_type == EVENT_LIGHT_LONG_PRESS ||
+        event.event_type == EVENT_LIGHT_LONG_UP ||
+        event.event_type == EVENT_ALARM_BUTTON_DOWN ||
+        event.event_type == EVENT_ALARM_BUTTON_UP ||
+        event.event_type == EVENT_ALARM_LONG_PRESS ||
+        event.event_type == EVENT_ALARM_LONG_UP
+    ) {
+        state->upper_button_pressed = true;
+    }
+
     state_transition(state, counter, event.event_type);
     rtc_counter_t elapsed = elapsed_time(state, counter);
 
@@ -341,7 +354,6 @@ bool fast_stopwatch_face_loop(movement_event_t event, void *context) {
             break;
         case EVENT_ALARM_BUTTON_DOWN:
         case EVENT_LIGHT_BUTTON_DOWN:
-            state->upper_button_pressed = true;
             // fall through
         case EVENT_LIGHT_LONG_PRESS:
             _button_beep();
