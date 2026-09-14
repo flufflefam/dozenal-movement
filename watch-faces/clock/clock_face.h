@@ -61,6 +61,8 @@ typedef struct {
     clock_display_t current_display;
     bool showing_date;
     bool mode_cycle_pending;
+    bool alarm_button_down;
+    rtc_counter_t alarm_button_start;
     rtc_counter_t date_display_deadline;
 } clock_state_t;
 
