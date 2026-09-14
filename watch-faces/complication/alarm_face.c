@@ -217,7 +217,7 @@ bool alarm_face_loop(movement_event_t event, void *context) {
             _alarm_face_display_alarm_time(state);
             if (state->alarm_button_repeat_active) {
                 state->alarm_button_repeat_ticks++;
-                if (state->alarm_button_repeat_ticks >= 4) {
+                if (state->alarm_button_repeat_ticks >= 2) {
                     state->alarm_button_repeat_ticks = 0;
                     _alarm_face_advance_selected_value(state);
                     _alarm_face_display_alarm_time(state);
