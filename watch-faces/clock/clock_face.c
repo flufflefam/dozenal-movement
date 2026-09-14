@@ -156,6 +156,17 @@ static void clock_display_dozenal_day(watch_date_time_t date_time) {
     watch_display_text_with_fallback(WATCH_POSITION_TOP_LEFT, watch_utility_get_long_weekday(date_time), watch_utility_get_weekday(date_time));
 }
 
+static void clock_display_date(watch_date_time_t date_time, clock_display_t current_display) {
+    if (current_display == CLOCK_DISPLAY_DIURNAL || current_display == CLOCK_DISPLAY_SEMIDIURNAL) {
+        clock_display_dozenal_date(date_time);
+        return;
+    }
+
+    char date[11];
+    snprintf(date, sizeof(date), "%04d-%02d-%02d", date_time.unit.year + WATCH_RTC_REFERENCE_YEAR, date_time.unit.month, date_time.unit.day);
+    watch_display_text(WATCH_POSITION_FULL, date);
+}
+
 // 2.4 volts seems to offer adequate warning of a low battery condition?
 // refined based on user reports and personal observations; may need further adjustment.
 #ifndef CLOCK_FACE_LOW_BATTERY_VOLTAGE_THRESHOLD
@@ -336,6 +347,7 @@ void clock_face_setup(uint8_t watch_face_index, void ** context_ptr) {
         movement_set_time_signal_enabled(false);
         state->watch_face_index = watch_face_index;
         state->current_display = clock_display_mode;
+        state->showing_date = false;
     }
 }
 
@@ -356,6 +368,7 @@ void clock_face_activate(void *context) {
 
     // this ensures that none of the timestamp fields will match, so we can re-render them all.
     state->date_time.previous.reg = 0xFFFFFFFF;
+    state->showing_date = false;
 }
 
 bool clock_face_loop(movement_event_t event, void *context) {
@@ -371,7 +384,17 @@ bool clock_face_loop(movement_event_t event, void *context) {
         case EVENT_ACTIVATE:
             current = movement_get_local_date_time();
 
-            clock_display_clock(state, current, event.subsecond);
+            if (state->showing_date) {
+                if ((int32_t)(watch_rtc_get_counter() - state->date_display_deadline) >= 0) {
+                    state->showing_date = false;
+                    state->date_time.previous.reg = 0xFFFFFFFF;
+                    clock_display_clock(state, current, event.subsecond);
+                } else {
+                    clock_display_date(current, state->current_display);
+                }
+            } else {
+                clock_display_clock(state, current, event.subsecond);
+            }
 
             clock_check_battery_periodically(state, current);
 
@@ -379,6 +402,7 @@ bool clock_face_loop(movement_event_t event, void *context) {
 
             break;
         case EVENT_ALARM_BUTTON_UP:
+            state->showing_date = false;
             // Cycle through decimal/dozenal display modes as listed in clock_display_t
             state->current_display = (state->current_display + 1) % CLOCK_DISPLAY_NUM_MODES;
             clock_display_mode = state->current_display;
@@ -407,6 +431,10 @@ bool clock_face_loop(movement_event_t event, void *context) {
             //printf("EVENT_ALARM_BUTTON_UP - %d\r\n", state->current_display);
             break;
         case EVENT_ALARM_LONG_PRESS:
+            current = movement_get_local_date_time();
+            state->showing_date = true;
+            state->date_display_deadline = watch_rtc_get_counter() + 3 * watch_rtc_get_frequency();
+            clock_display_date(current, state->current_display);
             break;
         case EVENT_BACKGROUND_TASK:
             // uncomment this line to snap back to the clock face when the hour signal sounds:

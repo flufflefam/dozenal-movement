@@ -124,6 +124,9 @@ Holding the ALARM button while setting the alarm starts automatically advancing
 the selected value after the normal long-press delay, and releasing it stops
 the repeat.
 The main clock face must not use an ALARM long press to toggle the hourly chime.
+On the main clock face, an ALARM long press temporarily shows the current
+year-month-date in the active mode, then returns to the time display after a
+few seconds. A short ALARM press continues to cycle time modes.
 
 ## Stopwatch Face
 
