@@ -104,6 +104,9 @@ changing those faces.
 On the alarm face, the LIGHT button enters and advances alarm-time setting,
 while the lower-right ALARM button adjusts the selected value during setting
 and cycles through alarm off, hourly chime, alarm, and both in normal mode.
+Holding the ALARM button while setting the alarm starts automatically advancing
+the selected value after the normal long-press delay, and releasing it stops
+the repeat.
 The main clock face must not use an ALARM long press to toggle the hourly chime.
 
 ## Stopwatch Face
@@ -111,3 +114,8 @@ The main clock face must not use an ALARM long press to toggle the hourly chime.
 Dozenal movement uses `fast_stopwatch_face` for the stopwatch unless the
 configuration explicitly selects a different stopwatch face. Apply stopwatch
 behavior changes to the active face accordingly.
+
+## Original Firmware Documentation
+
+Whenever a patch matches or restores behavior from the original Casio firmware,
+document that behavior in `AGENTS.md` as part of the same change.
