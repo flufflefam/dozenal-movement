@@ -436,10 +436,6 @@ bool clock_face_loop(movement_event_t event, void *context) {
                 clock_indicate(WATCH_INDICATOR_PM, 0);
             }
             //printf("EVENT_ALARM_BUTTON_UP - %d\r\n", state->current_display);
-            clock_show_date(state);
-            break;
-        case EVENT_ALARM_BUTTON_DOWN:
-            clock_show_date(state);
             break;
         case EVENT_ALARM_LONG_PRESS:
             clock_show_date(state);
