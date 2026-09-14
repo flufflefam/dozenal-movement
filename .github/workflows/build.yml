@@ -1,0 +1,28 @@
+name: Build Firmware
+
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      - gh-pages
+  workflow_dispatch:
+
+jobs:
+  build-firmware:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/armmbed/mbed-os-env:latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Ensure workspace directory is defined as safe
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Compile SensorWatch Pro custom LCD firmware
+        run: make BOARD=sensorwatch_pro DISPLAY=custom
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: sensorwatch-pro-custom-firmware
+          path: build/firmware.uf2
