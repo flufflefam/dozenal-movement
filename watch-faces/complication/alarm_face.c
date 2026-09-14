@@ -172,6 +172,7 @@ void alarm_face_setup(uint8_t watch_face_index, void **context_ptr) {
 void alarm_face_activate(void *context) {
     alarm_face_state_t *state = (alarm_face_state_t *)context;
     state->setting_mode = ALARM_FACE_SETTING_MODE_NONE;
+    state->upper_button_pressed = false;
 }
 void alarm_face_resign(void *context) {
     (void) context;
@@ -198,6 +199,7 @@ bool alarm_face_loop(movement_event_t event, void *context) {
             if (event.subsecond % 2 == 0) _alarm_face_blink_setting(state);
             break;
         case EVENT_LIGHT_BUTTON_DOWN:
+            state->upper_button_pressed = true;
             switch (state->setting_mode) {
                 case ALARM_FACE_SETTING_MODE_NONE:
                     // If we're not in a setting mode, turn on the LED like normal.
@@ -221,6 +223,14 @@ bool alarm_face_loop(movement_event_t event, void *context) {
                 _alarm_face_display_alarm_time(state);
             }
             break;
+        case EVENT_MODE_BUTTON_UP:
+            if (state->upper_button_pressed) {
+                state->upper_button_pressed = false;
+                movement_move_to_face(0);
+            } else {
+                movement_default_loop_handler(event);
+            }
+            break;
         case EVENT_ALARM_BUTTON_UP:
             if (state->setting_mode == ALARM_FACE_SETTING_MODE_NONE) {
                 // in normal mode, toggle alarm on/off.
@@ -237,6 +247,7 @@ bool alarm_face_loop(movement_event_t event, void *context) {
             }
             break;
         case EVENT_ALARM_BUTTON_DOWN:
+            state->upper_button_pressed = true;
             switch (state->setting_mode) {
                 case ALARM_FACE_SETTING_MODE_NONE:
                     // nothing to do here, alarm toggle is handled in EVENT_ALARM_BUTTON_UP.

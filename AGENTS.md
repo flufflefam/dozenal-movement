@@ -88,3 +88,10 @@ mode and its native increments:
 Do not display or advance time or alarm fields using fixed decimal hour and
 minute increments when the selected mode is Dozenal or Semidiurnal. Preserve
 the selected mode while entering, editing, displaying, and confirming values.
+
+## Original Button Navigation
+
+On the alarm and stopwatch faces, pressing either the upper-left LIGHT button or
+the lower-right ALARM button, followed by the lower-left MODE button, returns to
+the main clock face. Preserve this original Casio navigation behavior when
+changing those faces.

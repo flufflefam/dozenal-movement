@@ -108,6 +108,7 @@ void stopwatch_face_activate(void *context) {
     if (watch_sleep_animation_is_running()) watch_stop_sleep_animation();
 
     stopwatch_state_t *stopwatch_state = (stopwatch_state_t *)context;
+    stopwatch_state->upper_button_pressed = false;
     if (stopwatch_state->running) {
         // because the low power update happens on the minute mark, and the wearer could start
         // the stopwatch anytime, the low power update could fire up to 59 seconds later than
@@ -140,6 +141,7 @@ bool stopwatch_face_loop(movement_event_t event, void *context) {
             }
             break;
         case EVENT_LIGHT_BUTTON_DOWN:
+            stopwatch_state->upper_button_pressed = true;
             movement_illuminate_led();
             if (!stopwatch_state->running) {
                 stopwatch_state->start_time.reg = 0;
@@ -152,7 +154,16 @@ bool stopwatch_face_loop(movement_event_t event, void *context) {
                 watch_display_text(WATCH_POSITION_TOP_RIGHT, "  ");
             }
             break;
+        case EVENT_MODE_BUTTON_UP:
+            if (stopwatch_state->upper_button_pressed) {
+                stopwatch_state->upper_button_pressed = false;
+                movement_move_to_face(0);
+            } else {
+                movement_default_loop_handler(event);
+            }
+            break;
         case EVENT_ALARM_BUTTON_DOWN:
+            stopwatch_state->upper_button_pressed = true;
             if (movement_button_should_sound()) {
                 watch_buzzer_play_note_with_volume(BUZZER_NOTE_C7, 50, movement_button_volume());
             }
