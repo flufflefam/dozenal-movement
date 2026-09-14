@@ -103,10 +103,12 @@ displayed units.
 
 Date components shown by active faces use the same display mode. In Dozenal
 and Semidiurnal modes, convert numeric date components independently to base
-12 using `A` for ten and `B` for eleven; for example, decimal `2026-01-10`
-is displayed as `120A-01-0A`. Weekday names remain unchanged across all time
-modes. Faces without a date component do not need to add one solely for this
-conversion.
+12 using the existing time glyphs: ten is the `2` glyph with its top horizontal
+segment removed, and eleven is displayed as `E`. For example, decimal
+`2026-01-10` is displayed with the equivalent glyphs for `120` plus dozenal
+ten, followed by `-01-0` plus dozenal ten. Weekday names remain unchanged
+across all time modes. Faces without a date component do not need to add one
+solely for this conversion.
 
 ## Original Button Navigation
 

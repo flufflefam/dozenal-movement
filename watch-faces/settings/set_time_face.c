@@ -185,20 +185,7 @@ bool set_time_face_loop(movement_event_t event, void *context) {
         watch_clear_indicator(WATCH_INDICATOR_24H);
         watch_clear_indicator(WATCH_INDICATOR_PM);
         if (_set_time_face_uses_dozenal()) {
-            char year[5];
-            char month[3];
-            char day[3];
-            char date[11] = "          ";
-
-            clock_format_dozenal_value(date_time.unit.year + WATCH_RTC_REFERENCE_YEAR, year, 4);
-            clock_format_dozenal_value(date_time.unit.month, month, 2);
-            clock_format_dozenal_value(date_time.unit.day, day, 2);
-            memcpy(date, year, 4);
-            date[4] = '-';
-            memcpy(date + 5, month, 2);
-            date[7] = '-';
-            memcpy(date + 8, day, 2);
-            watch_display_text(WATCH_POSITION_FULL, date);
+            clock_display_dozenal_date(date_time);
         } else {
             sprintf(buf, "%2d%02d%02d", date_time.unit.year + 20, date_time.unit.month, date_time.unit.day);
         }
