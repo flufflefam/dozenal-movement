@@ -167,6 +167,12 @@ static void clock_display_date(watch_date_time_t date_time, clock_display_t curr
     watch_display_text(WATCH_POSITION_FULL, date);
 }
 
+static void clock_show_date(clock_state_t *state) {
+    state->showing_date = true;
+    state->date_display_deadline = watch_rtc_get_counter() + 3 * watch_rtc_get_frequency();
+    clock_display_date(movement_get_local_date_time(), state->current_display);
+}
+
 // 2.4 volts seems to offer adequate warning of a low battery condition?
 // refined based on user reports and personal observations; may need further adjustment.
 #ifndef CLOCK_FACE_LOW_BATTERY_VOLTAGE_THRESHOLD
@@ -430,11 +436,11 @@ bool clock_face_loop(movement_event_t event, void *context) {
             }
             //printf("EVENT_ALARM_BUTTON_UP - %d\r\n", state->current_display);
             break;
+        case EVENT_ALARM_BUTTON_DOWN:
+            clock_show_date(state);
+            break;
         case EVENT_ALARM_LONG_PRESS:
-            current = movement_get_local_date_time();
-            state->showing_date = true;
-            state->date_display_deadline = watch_rtc_get_counter() + 3 * watch_rtc_get_frequency();
-            clock_display_date(current, state->current_display);
+            clock_show_date(state);
             break;
         case EVENT_BACKGROUND_TASK:
             // uncomment this line to snap back to the clock face when the hour signal sounds:
