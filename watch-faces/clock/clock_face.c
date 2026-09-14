@@ -446,8 +446,6 @@ bool clock_face_loop(movement_event_t event, void *context) {
             state->mode_cycle_pending = true;
             break;
         case EVENT_ALARM_LONG_PRESS:
-            state->mode_cycle_pending = false;
-            clock_show_date(state);
             break;
         case EVENT_ALARM_LONG_UP:
             state->mode_cycle_pending = false;
