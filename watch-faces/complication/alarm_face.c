@@ -286,6 +286,9 @@ bool alarm_face_loop(movement_event_t event, void *context) {
             }
             break;
         case EVENT_ALARM_BUTTON_DOWN:
+            if (state->alarm_button_pressed) {
+                break;
+            }
             state->upper_button_pressed = true;
             state->alarm_button_pressed = true;
             state->alarm_button_repeat_ticks = 0;
