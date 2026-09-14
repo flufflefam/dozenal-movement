@@ -184,7 +184,24 @@ bool set_time_face_loop(movement_event_t event, void *context) {
         watch_clear_colon();
         watch_clear_indicator(WATCH_INDICATOR_24H);
         watch_clear_indicator(WATCH_INDICATOR_PM);
-        sprintf(buf, "%2d%02d%02d", date_time.unit.year + 20, date_time.unit.month, date_time.unit.day);
+        if (_set_time_face_uses_dozenal()) {
+            char year[5];
+            char month[3];
+            char day[3];
+            char date[11] = "          ";
+
+            clock_format_dozenal_value(date_time.unit.year + WATCH_RTC_REFERENCE_YEAR, year, 4);
+            clock_format_dozenal_value(date_time.unit.month, month, 2);
+            clock_format_dozenal_value(date_time.unit.day, day, 2);
+            memcpy(date, year, 4);
+            date[4] = '-';
+            memcpy(date + 5, month, 2);
+            date[7] = '-';
+            memcpy(date + 8, day, 2);
+            watch_display_text(WATCH_POSITION_FULL, date);
+        } else {
+            sprintf(buf, "%2d%02d%02d", date_time.unit.year + 20, date_time.unit.month, date_time.unit.day);
+        }
     } else if (_set_time_face_uses_dozenal()) {
         watch_clear_colon();
         watch_clear_indicator(WATCH_INDICATOR_24H);
@@ -203,12 +220,17 @@ bool set_time_face_loop(movement_event_t event, void *context) {
         }
     }
 
-    if (current_page < 3 || !_set_time_face_uses_dozenal()) watch_display_text(WATCH_POSITION_BOTTOM, buf);
+    if (!_set_time_face_uses_dozenal()) watch_display_text(WATCH_POSITION_BOTTOM, buf);
 
     // blink up the parameter we're setting
     if (event.subsecond % 2 && !_quick_ticks_running) {
         switch (current_page) {
             case 0:
+                if (_set_time_face_uses_dozenal()) {
+                    for (uint8_t i = 0; i < 4; i++) watch_display_character(' ', i);
+                    break;
+                }
+                /* fall through */
             case 4:
                 if (_set_time_face_uses_dozenal() && current_page >= 4) {
                     if (clock_face_get_display_mode() == CLOCK_DISPLAY_SEMIDIURNAL) watch_display_character(' ', 4);
@@ -218,6 +240,12 @@ bool set_time_face_loop(movement_event_t event, void *context) {
                 }
                 break;
             case 1:
+                if (_set_time_face_uses_dozenal()) {
+                    watch_display_character(' ', 5);
+                    watch_display_character(' ', 6);
+                    break;
+                }
+                /* fall through */
             case 5:
                 if (_set_time_face_uses_dozenal() && current_page >= 4) {
                     watch_display_character(' ', 6);
@@ -227,6 +255,12 @@ bool set_time_face_loop(movement_event_t event, void *context) {
                 }
                 break;
             case 2:
+                if (_set_time_face_uses_dozenal()) {
+                    watch_display_character(' ', 8);
+                    watch_display_character(' ', 9);
+                    break;
+                }
+                /* fall through */
             case 6:
                 if (_set_time_face_uses_dozenal() && current_page >= 4) watch_display_character(' ', 8);
                 else watch_display_text(WATCH_POSITION_SECONDS, "  ");

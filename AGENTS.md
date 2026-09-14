@@ -101,6 +101,13 @@ Dozenal intervals are divided by two. The two-hour Dozenal hour interval is
 therefore the conversion for one displayed unit, not a request to skip two
 displayed units.
 
+Date components shown by active faces use the same display mode. In Dozenal
+and Semidiurnal modes, convert numeric date components independently to base
+12 using `A` for ten and `B` for eleven; for example, decimal `2026-01-10`
+is displayed as `120A-01-0A`. Weekday names remain unchanged across all time
+modes. Faces without a date component do not need to add one solely for this
+conversion.
+
 ## Original Button Navigation
 
 On the alarm and stopwatch faces, pressing either the upper-left LIGHT button or

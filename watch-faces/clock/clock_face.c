@@ -38,6 +38,7 @@
 #include "watch_common_display.h"
 
 static const char dozenal_digits[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '2', 'E' };
+static const char dozenal_date_digits[] = "0123456789AB";
 
 // Table at the end of: https://clocks.dozenal.ca/pdf/watch.pdf
 static uint32_t dig1_sec = 2 * 60 * 60;
@@ -49,6 +50,14 @@ static double dig5_sec = 25 / (double)72;
 // Cannot reliably process mode button presses at 64
 static uint8_t dozenal_tick_frequency = 16;
 static clock_display_t clock_display_mode = CLOCK_DISPLAY_12H;
+
+void clock_format_dozenal_value(uint32_t value, char *buffer, uint8_t digits) {
+    buffer[digits] = '\0';
+    while (digits > 0) {
+        buffer[--digits] = dozenal_date_digits[value % 12];
+        value /= 12;
+    }
+}
 
 void clock_display_dozenal_digit(uint8_t digit, uint8_t position) {
     if (digit != 10) {
@@ -129,6 +138,14 @@ void clock_display_dozenal_duration(uint32_t seconds, uint8_t subsecond, clock_d
 static void clock_display_dozenal(watch_date_time_t date_time, uint8_t subsecond, clock_display_t current_display) {
     uint32_t seconds = (((uint32_t)date_time.unit.hour * 60) + (uint32_t)date_time.unit.minute) * 60 + (uint32_t)date_time.unit.second;
     clock_display_dozenal_duration(seconds, subsecond, current_display, false);
+}
+
+static void clock_display_dozenal_date(watch_date_time_t date_time) {
+    char day[3];
+
+    clock_format_dozenal_value(date_time.unit.day, day, 2);
+    watch_display_text_with_fallback(WATCH_POSITION_TOP_LEFT, watch_utility_get_long_weekday(date_time), watch_utility_get_weekday(date_time));
+    watch_display_text(WATCH_POSITION_TOP_RIGHT, day);
 }
 
 // 2.4 volts seems to offer adequate warning of a low battery condition?
@@ -254,6 +271,7 @@ static bool clock_display_some(watch_date_time_t current, watch_date_time_t prev
 static void clock_display_clock(clock_state_t *state, watch_date_time_t current, uint8_t subsecond) {
     if ((state->current_display == CLOCK_DISPLAY_DIURNAL) || (state->current_display == CLOCK_DISPLAY_SEMIDIURNAL)) {
         clock_display_dozenal(current, subsecond, state->current_display);
+        clock_display_dozenal_date(current);
         return;
     }
 
