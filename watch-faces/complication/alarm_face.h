@@ -59,6 +59,7 @@ typedef struct {
     bool upper_button_pressed;
     bool alarm_button_pressed;
     bool alarm_button_repeat_active;
+    uint8_t alarm_button_repeat_ticks;
 } alarm_face_state_t;
 
 void alarm_face_setup(uint8_t watch_face_index, void **context_ptr);

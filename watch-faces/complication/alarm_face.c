@@ -190,6 +190,7 @@ void alarm_face_activate(void *context) {
     state->upper_button_pressed = false;
     state->alarm_button_pressed = false;
     state->alarm_button_repeat_active = false;
+    state->alarm_button_repeat_ticks = 0;
 }
 void alarm_face_resign(void *context) {
     (void) context;
@@ -214,15 +215,20 @@ bool alarm_face_loop(movement_event_t event, void *context) {
 
             // but in settings mode, we need to blink up the parameter we're setting.
             _alarm_face_display_alarm_time(state);
-            if (state->alarm_button_repeat_active && event.subsecond == 0) {
-                _alarm_face_advance_selected_value(state);
-                _alarm_face_display_alarm_time(state);
+            if (state->alarm_button_repeat_active) {
+                state->alarm_button_repeat_ticks++;
+                if (state->alarm_button_repeat_ticks >= 4) {
+                    state->alarm_button_repeat_ticks = 0;
+                    _alarm_face_advance_selected_value(state);
+                    _alarm_face_display_alarm_time(state);
+                }
             }
             if (event.subsecond % 2 == 0) _alarm_face_blink_setting(state);
             break;
         case EVENT_LIGHT_BUTTON_DOWN:
             state->upper_button_pressed = true;
             state->alarm_button_repeat_active = false;
+            state->alarm_button_repeat_ticks = 0;
             switch (state->setting_mode) {
                 case ALARM_FACE_SETTING_MODE_NONE:
                     state->setting_mode = ALARM_FACE_SETTING_MODE_SETTING_HOUR;
@@ -259,6 +265,7 @@ bool alarm_face_loop(movement_event_t event, void *context) {
         case EVENT_ALARM_LONG_UP:
             state->alarm_button_pressed = false;
             state->alarm_button_repeat_active = false;
+            state->alarm_button_repeat_ticks = 0;
             if (state->setting_mode == ALARM_FACE_SETTING_MODE_NONE) {
                 if (!movement_time_signal_enabled() && !movement_alarm_enabled()) {
                     movement_set_time_signal_enabled(true);
@@ -281,6 +288,7 @@ bool alarm_face_loop(movement_event_t event, void *context) {
         case EVENT_ALARM_BUTTON_DOWN:
             state->upper_button_pressed = true;
             state->alarm_button_pressed = true;
+            state->alarm_button_repeat_ticks = 0;
             _alarm_face_advance_selected_value(state);
             if (state->setting_mode != ALARM_FACE_SETTING_MODE_NONE) {
                 _alarm_face_display_alarm_time(state);
@@ -289,10 +297,12 @@ bool alarm_face_loop(movement_event_t event, void *context) {
         case EVENT_ALARM_LONG_PRESS:
             if (state->alarm_button_pressed && state->setting_mode != ALARM_FACE_SETTING_MODE_NONE) {
                 state->alarm_button_repeat_active = true;
+                state->alarm_button_repeat_ticks = 0;
             }
             break;
         case EVENT_LIGHT_LONG_PRESS:
             state->alarm_button_repeat_active = false;
+            state->alarm_button_repeat_ticks = 0;
             if (state->setting_mode == ALARM_FACE_SETTING_MODE_NONE) {
                 state->setting_mode = ALARM_FACE_SETTING_MODE_SETTING_HOUR;
                 movement_request_tick_frequency(4);
