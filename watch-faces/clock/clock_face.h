@@ -57,7 +57,6 @@ typedef struct {
     } date_time;
     uint8_t last_battery_check;
     uint8_t watch_face_index;
-    bool time_signal_enabled;
     bool battery_low;
     clock_display_t current_display;
 } clock_state_t;

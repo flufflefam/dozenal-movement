@@ -96,6 +96,11 @@ the lower-right ALARM button, followed by the lower-left MODE button, returns to
 the main clock face. Preserve this original Casio navigation behavior when
 changing those faces.
 
+On the alarm face, the LIGHT button enters and advances alarm-time setting,
+while the lower-right ALARM button adjusts the selected value during setting
+and cycles through alarm off, hourly chime, alarm, and both in normal mode.
+The main clock face must not use an ALARM long press to toggle the hourly chime.
+
 ## Stopwatch Face
 
 Dozenal movement uses `fast_stopwatch_face` for the stopwatch unless the

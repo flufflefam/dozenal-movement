@@ -877,6 +877,14 @@ void movement_set_alarm_enabled(bool value) {
     movement_state.alarm_enabled = value;
 }
 
+bool movement_time_signal_enabled(void) {
+    return movement_state.time_signal_enabled;
+}
+
+void movement_set_time_signal_enabled(bool value) {
+    movement_state.time_signal_enabled = value;
+}
+
 bool movement_enable_tap_detection_if_available(bool enable_double_tap) {
     if (movement_state.has_lis2dw) {
         // configure tap duration threshold and enable Z axis

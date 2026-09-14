@@ -290,6 +290,7 @@ typedef struct {
 
     // temporary alarm enabled boolean, until we implement this in advisories
     bool alarm_enabled;
+    bool time_signal_enabled;
 
     // boolean set if thermistor is detected
     bool has_thermistor;
@@ -394,6 +395,8 @@ void movement_store_settings(void);
 /// Worth considering a better way to handle this.
 bool movement_alarm_enabled(void);
 void movement_set_alarm_enabled(bool value);
+bool movement_time_signal_enabled(void);
+void movement_set_time_signal_enabled(bool value);
 
 // if the board has an accelerometer, these functions will enable or disable tap detection.
 bool movement_enable_tap_detection_if_available(bool enable_double_tap);
