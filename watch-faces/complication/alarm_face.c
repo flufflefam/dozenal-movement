@@ -222,6 +222,7 @@ bool alarm_face_loop(movement_event_t event, void *context) {
             break;
         case EVENT_LIGHT_BUTTON_DOWN:
             state->upper_button_pressed = true;
+            state->alarm_button_repeat_active = false;
             switch (state->setting_mode) {
                 case ALARM_FACE_SETTING_MODE_NONE:
                     state->setting_mode = ALARM_FACE_SETTING_MODE_SETTING_HOUR;
@@ -231,7 +232,6 @@ bool alarm_face_loop(movement_event_t event, void *context) {
                 case ALARM_FACE_SETTING_MODE_SETTING_HOUR:
                     // If we're setting the hour, advance to minute set mode.
                     state->setting_mode = ALARM_FACE_SETTING_MODE_SETTING_MINUTE;
-                    state->alarm_button_repeat_active = false;
                     break;
                 case ALARM_FACE_SETTING_MODE_SETTING_MINUTE:
                     state->setting_mode = ALARM_FACE_SETTING_MODE_NONE;
@@ -292,6 +292,7 @@ bool alarm_face_loop(movement_event_t event, void *context) {
             }
             break;
         case EVENT_LIGHT_LONG_PRESS:
+            state->alarm_button_repeat_active = false;
             if (state->setting_mode == ALARM_FACE_SETTING_MODE_NONE) {
                 state->setting_mode = ALARM_FACE_SETTING_MODE_SETTING_HOUR;
                 movement_request_tick_frequency(4);
