@@ -93,6 +93,13 @@ mode and its native increments:
 Do not display or advance time or alarm fields using fixed decimal hour and
 minute increments when the selected mode is Dozenal or Semidiurnal. Preserve
 the selected mode while entering, editing, displaying, and confirming values.
+Setting or repeating a value always advances it by one unit in the current
+display mode. In `12H` and `24H`, one hour is 3600 seconds and one minute is
+60 seconds. In `DIURNAL`, one displayed hour is two decimal hours and the
+alarm's minute group advances by 50 decimal seconds. In `SEMIDIURNAL`, those
+Dozenal intervals are divided by two. The two-hour Dozenal hour interval is
+therefore the conversion for one displayed unit, not a request to skip two
+displayed units.
 
 ## Original Button Navigation
 
