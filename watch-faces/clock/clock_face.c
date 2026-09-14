@@ -459,6 +459,12 @@ bool clock_face_loop(movement_event_t event, void *context) {
             state->alarm_button_start = watch_rtc_get_counter();
             break;
         case EVENT_ALARM_LONG_PRESS:
+            state->mode_cycle_pending = false;
+            clock_show_date(state);
+            break;
+        case EVENT_ALARM_REALLY_LONG_PRESS:
+            state->mode_cycle_pending = false;
+            clock_show_date(state);
             break;
         case EVENT_ALARM_LONG_UP:
             state->alarm_button_down = false;
