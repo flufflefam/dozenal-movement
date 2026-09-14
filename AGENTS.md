@@ -61,6 +61,11 @@ first digit changes every 2 hours. The entire set of digits is the following:
 
 The day begins at midnight, time `000.0(0)`.
 
+On the SensorWatch display, Dozenal digit ten is represented by the glyph `2`
+with its top horizontal segment removed. It is rendered directly through the
+LCD segment map rather than as ordinary text. Dozenal digit eleven is displayed
+as `E`.
+
 ## Semidiurnal Time
 
 In this codebase, Semidiurnal time is the Dozenal time display compressed into
