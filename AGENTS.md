@@ -95,3 +95,9 @@ On the alarm and stopwatch faces, pressing either the upper-left LIGHT button or
 the lower-right ALARM button, followed by the lower-left MODE button, returns to
 the main clock face. Preserve this original Casio navigation behavior when
 changing those faces.
+
+## Stopwatch Face
+
+Dozenal movement uses `fast_stopwatch_face` for the stopwatch unless the
+configuration explicitly selects a different stopwatch face. Apply stopwatch
+behavior changes to the active face accordingly.

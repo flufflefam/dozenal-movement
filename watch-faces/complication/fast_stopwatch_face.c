@@ -317,6 +317,7 @@ void fast_stopwatch_face_setup(uint8_t watch_face_index, void ** context_ptr) {
 
 void fast_stopwatch_face_activate(void *context) {
     fast_stopwatch_state_t *state = (fast_stopwatch_state_t *) context;
+    state->upper_button_pressed = false;
     // force full re-draw
     state->old_display.seconds = UINT_MAX;
     state->old_display.minutes = UINT_MAX;
@@ -340,12 +341,22 @@ bool fast_stopwatch_face_loop(movement_event_t event, void *context) {
             break;
         case EVENT_ALARM_BUTTON_DOWN:
         case EVENT_LIGHT_BUTTON_DOWN:
+            state->upper_button_pressed = true;
+            // fall through
         case EVENT_LIGHT_LONG_PRESS:
             _button_beep();
             // fall through
         case EVENT_TICK:
             _draw_indicators(state, event, elapsed);
             _display_elapsed(state, elapsed);
+            break;
+        case EVENT_MODE_BUTTON_UP:
+            if (state->upper_button_pressed) {
+                state->upper_button_pressed = false;
+                movement_move_to_face(0);
+            } else {
+                movement_default_loop_handler(event);
+            }
             break;
         default:
             movement_default_loop_handler(event);
