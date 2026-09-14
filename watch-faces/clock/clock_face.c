@@ -167,10 +167,39 @@ static void clock_display_date(watch_date_time_t date_time, clock_display_t curr
     watch_display_text(WATCH_POSITION_FULL, date);
 }
 
+static void clock_indicate(watch_indicator_t indicator, bool on);
+static bool clock_is_pm(watch_date_time_t date_time);
+
 static void clock_show_date(clock_state_t *state) {
     state->showing_date = true;
     state->date_display_deadline = watch_rtc_get_counter() + 3 * watch_rtc_get_frequency();
     clock_display_date(movement_get_local_date_time(), state->current_display);
+}
+
+static void clock_cycle_display_mode(clock_state_t *state, watch_date_time_t current) {
+    state->current_display = (state->current_display + 1) % CLOCK_DISPLAY_NUM_MODES;
+    clock_display_mode = state->current_display;
+    state->date_time.previous.reg = 0xFFFFFFFF;
+
+    if (state->current_display == CLOCK_DISPLAY_12H) {
+        movement_request_tick_frequency(1);
+        watch_set_colon();
+        clock_indicate(WATCH_INDICATOR_24H, 0);
+        clock_indicate(WATCH_INDICATOR_PM, clock_is_pm(current));
+    } else if (state->current_display == CLOCK_DISPLAY_24H) {
+        watch_set_colon();
+        clock_indicate(WATCH_INDICATOR_24H, 1);
+        clock_indicate(WATCH_INDICATOR_PM, 0);
+    } else if (state->current_display == CLOCK_DISPLAY_DIURNAL) {
+        movement_request_tick_frequency(dozenal_tick_frequency);
+        watch_clear_colon();
+        clock_indicate(WATCH_INDICATOR_24H, 0);
+        clock_indicate(WATCH_INDICATOR_PM, 0);
+    } else if (state->current_display == CLOCK_DISPLAY_SEMIDIURNAL) {
+        watch_clear_colon();
+        clock_indicate(WATCH_INDICATOR_24H, 0);
+        clock_indicate(WATCH_INDICATOR_PM, 0);
+    }
 }
 
 // 2.4 volts seems to offer adequate warning of a low battery condition?
@@ -354,6 +383,7 @@ void clock_face_setup(uint8_t watch_face_index, void ** context_ptr) {
         state->watch_face_index = watch_face_index;
         state->current_display = clock_display_mode;
         state->showing_date = false;
+        state->mode_cycle_pending = false;
     }
 }
 
@@ -390,6 +420,11 @@ bool clock_face_loop(movement_event_t event, void *context) {
         case EVENT_ACTIVATE:
             current = movement_get_local_date_time();
 
+            if (state->mode_cycle_pending) {
+                state->mode_cycle_pending = false;
+                clock_cycle_display_mode(state, current);
+            }
+
             if (state->showing_date) {
                 if ((int32_t)(watch_rtc_get_counter() - state->date_display_deadline) >= 0) {
                     state->showing_date = false;
@@ -408,39 +443,14 @@ bool clock_face_loop(movement_event_t event, void *context) {
 
             break;
         case EVENT_ALARM_BUTTON_UP:
-            current = movement_get_local_date_time();
-            state->showing_date = false;
-            // Cycle through decimal/dozenal display modes as listed in clock_display_t
-            state->current_display = (state->current_display + 1) % CLOCK_DISPLAY_NUM_MODES;
-            clock_display_mode = state->current_display;
-            // Force re-render of all digits as in clock_face_activate()
-            state->date_time.previous.reg = 0xFFFFFFFF;
-            // Adjust tick frequencies & diplay for type of time
-            if (state->current_display == CLOCK_DISPLAY_12H) {
-                movement_request_tick_frequency(1);
-                watch_set_colon();
-                clock_indicate(WATCH_INDICATOR_24H, 0);
-                clock_indicate(WATCH_INDICATOR_PM, clock_is_pm(current));
-            } else if (state->current_display == CLOCK_DISPLAY_24H) {
-                watch_set_colon();
-                clock_indicate(WATCH_INDICATOR_24H, 1);
-                clock_indicate(WATCH_INDICATOR_PM, 0);
-            } else if (state->current_display == CLOCK_DISPLAY_DIURNAL) {
-                movement_request_tick_frequency(dozenal_tick_frequency);
-                watch_clear_colon();
-                clock_indicate(WATCH_INDICATOR_24H, 0);
-                clock_indicate(WATCH_INDICATOR_PM, 0);
-            } else if (state->current_display == CLOCK_DISPLAY_SEMIDIURNAL) {
-                watch_clear_colon();
-                clock_indicate(WATCH_INDICATOR_24H, 0);
-                clock_indicate(WATCH_INDICATOR_PM, 0);
-            }
-            //printf("EVENT_ALARM_BUTTON_UP - %d\r\n", state->current_display);
+            state->mode_cycle_pending = true;
             break;
         case EVENT_ALARM_LONG_PRESS:
+            state->mode_cycle_pending = false;
             clock_show_date(state);
             break;
         case EVENT_ALARM_LONG_UP:
+            state->mode_cycle_pending = false;
             clock_show_date(state);
             break;
         case EVENT_BACKGROUND_TASK:

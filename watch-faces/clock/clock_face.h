@@ -60,6 +60,7 @@ typedef struct {
     bool battery_low;
     clock_display_t current_display;
     bool showing_date;
+    bool mode_cycle_pending;
     rtc_counter_t date_display_deadline;
 } clock_state_t;
 
