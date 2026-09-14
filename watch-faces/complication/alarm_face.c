@@ -253,6 +253,7 @@ bool alarm_face_loop(movement_event_t event, void *context) {
             }
             break;
         case EVENT_ALARM_BUTTON_UP:
+        case EVENT_ALARM_LONG_UP:
             state->alarm_button_repeat_active = false;
             if (state->setting_mode == ALARM_FACE_SETTING_MODE_NONE) {
                 if (!movement_time_signal_enabled() && !movement_alarm_enabled()) {
@@ -283,8 +284,6 @@ bool alarm_face_loop(movement_event_t event, void *context) {
         case EVENT_ALARM_LONG_PRESS:
             if (state->setting_mode != ALARM_FACE_SETTING_MODE_NONE) {
                 state->alarm_button_repeat_active = true;
-                _alarm_face_advance_selected_value(state);
-                _alarm_face_display_alarm_time(state);
             }
             break;
         case EVENT_LIGHT_LONG_PRESS:
