@@ -408,6 +408,7 @@ bool clock_face_loop(movement_event_t event, void *context) {
 
             break;
         case EVENT_ALARM_BUTTON_UP:
+            current = movement_get_local_date_time();
             state->showing_date = false;
             // Cycle through decimal/dozenal display modes as listed in clock_display_t
             state->current_display = (state->current_display + 1) % CLOCK_DISPLAY_NUM_MODES;
@@ -435,11 +436,15 @@ bool clock_face_loop(movement_event_t event, void *context) {
                 clock_indicate(WATCH_INDICATOR_PM, 0);
             }
             //printf("EVENT_ALARM_BUTTON_UP - %d\r\n", state->current_display);
+            clock_show_date(state);
             break;
         case EVENT_ALARM_BUTTON_DOWN:
             clock_show_date(state);
             break;
         case EVENT_ALARM_LONG_PRESS:
+            clock_show_date(state);
+            break;
+        case EVENT_ALARM_LONG_UP:
             clock_show_date(state);
             break;
         case EVENT_BACKGROUND_TASK:
