@@ -260,9 +260,10 @@ bool alarm_face_loop(movement_event_t event, void *context) {
                 movement_default_loop_handler(event);
             }
             break;
-        case EVENT_ALARM_BUTTON_UP:
+        case EVENT_ALARM_BUTTON_UP: {
+            bool alarm_button_was_repeating = state->alarm_button_repeat_active;
             state->alarm_button_pressed = false;
-            if (state->alarm_button_repeat_active) movement_request_tick_frequency(4);
+            if (alarm_button_was_repeating) movement_request_tick_frequency(4);
             state->alarm_button_repeat_active = false;
             if (state->setting_mode == ALARM_FACE_SETTING_MODE_NONE) {
                 if (!movement_time_signal_enabled() && !movement_alarm_enabled()) {
@@ -281,11 +282,12 @@ bool alarm_face_loop(movement_event_t event, void *context) {
                     movement_cancel_background_task_for_face(state->watch_face_index);
                 }
                 _alarm_face_display_modes();
-            } else {
+            } else if (!alarm_button_was_repeating) {
                 _alarm_face_advance_selected_value(state);
                 _alarm_face_display_alarm_time(state);
             }
             break;
+        }
         case EVENT_ALARM_LONG_UP:
             if (state->alarm_button_repeat_active) movement_request_tick_frequency(4);
             state->alarm_button_repeat_active = false;
