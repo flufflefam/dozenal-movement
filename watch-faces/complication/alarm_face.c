@@ -190,6 +190,7 @@ void alarm_face_activate(void *context) {
     state->upper_button_pressed = false;
     state->alarm_button_pressed = false;
     state->alarm_button_repeat_active = false;
+    state->alarm_button_repeat_advanced = false;
 }
 void alarm_face_resign(void *context) {
     (void) context;
@@ -218,6 +219,7 @@ bool alarm_face_loop(movement_event_t event, void *context) {
                 if (HAL_GPIO_BTN_ALARM_read()) {
                     _alarm_face_advance_selected_value(state);
                     _alarm_face_display_alarm_time(state);
+                    state->alarm_button_repeat_advanced = true;
                 } else {
                     state->alarm_button_repeat_active = false;
                     movement_request_tick_frequency(4);
@@ -261,10 +263,11 @@ bool alarm_face_loop(movement_event_t event, void *context) {
             }
             break;
         case EVENT_ALARM_BUTTON_UP: {
-            bool alarm_button_was_repeating = state->alarm_button_repeat_active;
+            bool alarm_button_was_repeating = state->alarm_button_repeat_active || state->alarm_button_repeat_advanced;
             state->alarm_button_pressed = false;
             if (alarm_button_was_repeating) movement_request_tick_frequency(4);
             state->alarm_button_repeat_active = false;
+            state->alarm_button_repeat_advanced = false;
             if (state->setting_mode == ALARM_FACE_SETTING_MODE_NONE) {
                 if (!movement_time_signal_enabled() && !movement_alarm_enabled()) {
                     movement_set_time_signal_enabled(true);
@@ -291,6 +294,7 @@ bool alarm_face_loop(movement_event_t event, void *context) {
         case EVENT_ALARM_LONG_UP:
             if (state->alarm_button_repeat_active) movement_request_tick_frequency(4);
             state->alarm_button_repeat_active = false;
+            state->alarm_button_repeat_advanced = false;
             break;
         case EVENT_ALARM_BUTTON_DOWN:
             if (state->alarm_button_pressed) {
@@ -298,6 +302,7 @@ bool alarm_face_loop(movement_event_t event, void *context) {
             }
             state->upper_button_pressed = true;
             state->alarm_button_pressed = true;
+            state->alarm_button_repeat_advanced = false;
             break;
         case EVENT_ALARM_LONG_PRESS:
             if (state->alarm_button_pressed && state->setting_mode != ALARM_FACE_SETTING_MODE_NONE) {
