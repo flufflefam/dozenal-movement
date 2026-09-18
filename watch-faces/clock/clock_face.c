@@ -345,7 +345,19 @@ static void clock_display_clock(clock_state_t *state, watch_date_time_t current,
     }
 }
 
-static void clock_display_low_energy(watch_date_time_t date_time) {
+static void clock_display_low_energy(watch_date_time_t date_time, clock_display_t current_display) {
+    if (current_display == CLOCK_DISPLAY_DIURNAL || current_display == CLOCK_DISPLAY_SEMIDIURNAL) {
+        watch_clear_colon();
+        clock_display_dozenal_duration(
+            (((uint32_t) date_time.unit.hour * 60) + (uint32_t) date_time.unit.minute) * 60 + (uint32_t) date_time.unit.second,
+            0,
+            current_display,
+            false
+        );
+        clock_display_dozenal_day(date_time);
+        return;
+    }
+
     if (movement_clock_mode_24h() == MOVEMENT_CLOCK_MODE_12H) {
         clock_indicate_pm(date_time);
         date_time = clock_24h_to_12h(date_time);
@@ -423,7 +435,7 @@ bool clock_face_loop(movement_event_t event, void *context) {
     switch (event.event_type) {
         case EVENT_LOW_ENERGY_UPDATE:
             clock_start_tick_tock_animation();
-            clock_display_low_energy(movement_get_local_date_time());
+            clock_display_low_energy(movement_get_local_date_time(), state->current_display);
             break;
         case EVENT_TICK:
         case EVENT_ACTIVATE:
