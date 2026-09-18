@@ -215,8 +215,13 @@ bool alarm_face_loop(movement_event_t event, void *context) {
             // but in settings mode, we need to blink up the parameter we're setting.
             _alarm_face_display_alarm_time(state);
             if (state->alarm_button_repeat_active) {
-                _alarm_face_advance_selected_value(state);
-                _alarm_face_display_alarm_time(state);
+                if (HAL_GPIO_BTN_ALARM_read()) {
+                    _alarm_face_advance_selected_value(state);
+                    _alarm_face_display_alarm_time(state);
+                } else {
+                    state->alarm_button_repeat_active = false;
+                    movement_request_tick_frequency(4);
+                }
             }
             if (event.subsecond % 2 == 0) _alarm_face_blink_setting(state);
             break;
