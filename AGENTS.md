@@ -123,6 +123,9 @@ and cycles through alarm off, hourly chime, alarm, and both in normal mode.
 Holding the ALARM button while setting the alarm starts automatically advancing
 the selected value after the normal long-press delay, and releasing it stops
 the repeat.
+Alarm-time hold cycling must match the set-time face exactly: use the same
+repeat frequency, advance once per repeat tick while held, and stop repeating
+only when the button is released.
 The main clock face must not use an ALARM long press to toggle the hourly chime.
 On the main clock face, an ALARM long press temporarily shows the current
 year-month-date in the active mode, then returns to the time display after a
