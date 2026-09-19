@@ -136,9 +136,8 @@ Alarm-time hold cycling must match the set-time face exactly: use the same
 repeat frequency, advance once per repeat tick while held, and stop repeating
 only when the button is released.
 The main clock face must not use an ALARM long press to toggle the hourly chime.
-On the main clock face, an ALARM long press temporarily shows the current
-year-month-date in the active mode, then returns to the time display after a
-few seconds. A short ALARM press continues to cycle time modes.
+On the main clock face, pressing or releasing ALARM cycles through all available
+time modes, and long-pressing ALARM does not display the year or date.
 
 ## Stopwatch Face
 
@@ -154,7 +153,7 @@ The following list documents discrepancies between an unmodified Casio F-91W use
 - **Time Modes:** Unmodified F-91W only supports standard 12-hour and 24-hour time modes. Current firmware adds `DIURNAL` (diurnal base-12 time) and `SEMIDIURNAL` time modes (collectively dozenal time).
 - **ALARM Button Function on Main Clock:**
   - *Original F-91W:* Pressing ALARM toggles between 12-hour and 24-hour display modes (showing a "24H" indicator in 24H mode). Holding ALARM sounds the alarm buzzer for testing.
-  - *Current UI:* Short-pressing ALARM cycles through all available time modes (`12H` -> `24H` -> `DIURNAL` -> `SEMIDIURNAL`). Holding ALARM temporarily displays the full year-month-date in the active time mode before returning to time display.
+  - *Current UI:* Pressing or releasing ALARM cycles through all available time modes (`12H` -> `24H` -> `DIURNAL` -> `SEMIDIURNAL`). Holding ALARM does not display the year or date.
 - **Date Display:** Unmodified F-91W displays day-of-week abbreviation and day-of-month (e.g. `SU  25`) at top-right. Current UI displays full date (including 4-digit year, month, day, or dozenal equivalents) depending on active mode and interactions.
 
 ### 2. Time Setting Face (`set_time_face`)

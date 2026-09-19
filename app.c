@@ -55,9 +55,6 @@ typedef struct {
     // F-91W direct mode return state
     bool quick_return_to_clock;
 
-    // Showing Date in main face
-    bool showing_date;
-
     // Alarm state
     bool alarm_enabled;
     bool chime_enabled;
@@ -259,23 +256,6 @@ static void update_indicators(void) {
 
 static void render_clock_face(void) {
     watch_date_time_t dt = watch_rtc_get_date_time();
-
-    if (g_state.showing_date) {
-        if (g_state.time_mode == TIME_MODE_DIURNAL || g_state.time_mode == TIME_MODE_SEMIDIURNAL) {
-            clock_display_dozenal_day(dt);
-            clock_display_dozenal_value(dt.unit.year + WATCH_RTC_REFERENCE_YEAR, 4, 4);
-            clock_display_dozenal_value(dt.unit.month, 2, 8);
-        } else {
-            char date[7];
-            char day[3];
-            snprintf(day, sizeof(day), "%02d", dt.unit.day);
-            snprintf(date, sizeof(date), "%04d%02d", dt.unit.year + WATCH_RTC_REFERENCE_YEAR, dt.unit.month);
-            watch_display_text_with_fallback(WATCH_POSITION_TOP_LEFT, watch_utility_get_long_weekday(dt), watch_utility_get_weekday(dt));
-            watch_display_text(WATCH_POSITION_TOP_RIGHT, day);
-            watch_display_text(WATCH_POSITION_BOTTOM, date);
-        }
-        return;
-    }
 
     if (g_state.time_mode == TIME_MODE_DIURNAL || g_state.time_mode == TIME_MODE_SEMIDIURNAL) {
         watch_clear_colon();
@@ -589,15 +569,10 @@ static void cb_alarm_pin(void) {
         handle_alarm_button_press();
     } else {
         g_state.alarm_btn_down = false;
-        if (g_state.showing_date) {
-            g_state.showing_date = false;
-        } else if (g_state.app_mode == WATCH_MODE_CLOCK) {
-            // Short press release in Clock mode toggles time display mode
-            uint32_t held_ticks = g_state.rtc_tick_counter - g_state.alarm_btn_down_ticks;
-            if (held_ticks < LONG_PRESS_TICKS) {
-                g_state.time_mode = (g_state.time_mode + 1) % TIME_MODE_NUM;
-                play_beep(button_beep_tune);
-            }
+        if (g_state.app_mode == WATCH_MODE_CLOCK) {
+            // Pressing ALARM button in Clock mode cycles time display mode on release
+            g_state.time_mode = (g_state.time_mode + 1) % TIME_MODE_NUM;
+            play_beep(button_beep_tune);
         }
     }
 }
@@ -616,9 +591,7 @@ static void cb_tick(void) {
     // Check ALARM button hold
     if (g_state.alarm_btn_down) {
         uint32_t held_ticks = g_state.rtc_tick_counter - g_state.alarm_btn_down_ticks;
-        if (g_state.app_mode == WATCH_MODE_CLOCK && held_ticks >= LONG_PRESS_TICKS) {
-            g_state.showing_date = true;
-        } else if ((g_state.app_mode == WATCH_MODE_ALARM && g_state.alarm_setting_active) || g_state.app_mode == WATCH_MODE_SET_TIME) {
+        if ((g_state.app_mode == WATCH_MODE_ALARM && g_state.alarm_setting_active) || g_state.app_mode == WATCH_MODE_SET_TIME) {
             if (held_ticks >= HOLD_REPEAT_DELAY_TICKS && (held_ticks % HOLD_REPEAT_RATE_TICKS == 0)) {
                 if (g_state.app_mode == WATCH_MODE_ALARM) advance_alarm_value();
                 else advance_set_time_value();
