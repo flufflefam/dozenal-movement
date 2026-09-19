@@ -26,14 +26,24 @@ jobs:
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Compile sensorwatch_pro custom simulator
         run: emmake make BOARD=sensorwatch_pro DISPLAY=custom BIN=${{ github.ref_name }}-firmware
+      - name: Create index and legacy aliases for simulator
+        run: |
+          cp build-sim/${{ github.ref_name }}-firmware.html build-sim/index.html
+          cp build-sim/${{ github.ref_name }}-firmware.js build-sim/index.js
+          cp build-sim/${{ github.ref_name }}-firmware.wasm build-sim/index.wasm
+          if [ "${{ github.ref_name }}" != "app-rewrite" ]; then
+            cp build-sim/${{ github.ref_name }}-firmware.html build-sim/app-rewrite-firmware.html
+            cp build-sim/${{ github.ref_name }}-firmware.js build-sim/app-rewrite-firmware.js
+            cp build-sim/${{ github.ref_name }}-firmware.wasm build-sim/app-rewrite-firmware.wasm
+          fi
       - name: Upload simulator
         uses: actions/upload-artifact@v4
         with:
           name: sensorwatch-pro-custom-simulator
           path: |
-            build-sim/${{ github.ref_name }}-firmware.html
-            build-sim/${{ github.ref_name }}-firmware.js
-            build-sim/${{ github.ref_name }}-firmware.wasm
+            build-sim/*.html
+            build-sim/*.js
+            build-sim/*.wasm
 
   gh-pages:
     needs: build-simulator

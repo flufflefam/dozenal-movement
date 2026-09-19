@@ -312,7 +312,7 @@ static void render_alarm_face(void) {
         clock_display_dozenal_duration(seconds, 0, 1, g_state.time_mode, false);
     } else {
         watch_set_colon();
-        char buf[8];
+        char buf[10];
         uint8_t h = g_state.alarm_hour;
         if (g_state.time_mode == TIME_MODE_12H) {
             h %= 12;

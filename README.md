@@ -1,7 +1,7 @@
 Dozenal Watch (Direct Gossamer App)
 ==================================
 
-[![Latest Simulator](https://img.shields.io/badge/Simulator-App%20Rewrite%20Firmware-2ea44f)](https://flufflefam.github.io/dozenal-movement/simulator/app-rewrite-firmware.html)
+[![Latest Simulator](https://img.shields.io/badge/Simulator-Main%20Firmware-2ea44f)](https://flufflefam.github.io/dozenal-movement/simulator/main-firmware.html)
 
 A direct, low-power standalone application implementation on top of the [Gossamer](https://github.com/joeycastillo/gossamer) hardware abstraction layer for the [Sensor Watch extension board](https://www.sensorwatch.net/), matching the exact functional behavior and navigation of a Casio F-91W with [dozenal and semidiurnal timekeeping modes](https://clocks.dozenal.ca/).
 
