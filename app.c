@@ -568,7 +568,7 @@ static void handle_alarm_button_press(void) {
 // --- Interrupt Handlers & App Lifecycle ---
 
 static void cb_mode_pin(void) {
-    if (!HAL_GPIO_BTN_MODE_read()) {
+    if (HAL_GPIO_BTN_MODE_read()) {
         handle_mode_button_press();
     }
 }
@@ -583,7 +583,7 @@ static void cb_light_pin(void) {
 }
 
 static void cb_alarm_pin(void) {
-    if (!HAL_GPIO_BTN_ALARM_read()) {
+    if (HAL_GPIO_BTN_ALARM_read()) {
         g_state.alarm_btn_down = true;
         g_state.alarm_btn_down_ticks = g_state.rtc_tick_counter;
         handle_alarm_button_press();
