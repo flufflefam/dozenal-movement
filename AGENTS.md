@@ -1,5 +1,7 @@
 # Agent Instructions
 
+Unless explicitly specified otherwise, all instructions and requirements refer to the Direct Gossamer App (`app.c`).
+
 ## Environment Setup
 
 Before building or running firmware checks, verify that the GNU Arm Embedded
@@ -120,8 +122,8 @@ the main clock face. Preserve this original Casio navigation behavior when
 changing those faces.
 
 On all four screens (clock, alarm and stopwatch set time), pressing down the 
-upper-left LIGHT button turns the backlight on, and releasing (de-pressing) it 
-turns the backlight off immediately without delay, matching original 
+upper-left LIGHT button turns the green backlight on (`watch_set_led_green()`), and releasing (de-pressing) it
+turns the backlight off immediately (`watch_set_led_off()`) without delay, matching original
 Casio F-91W hardware behavior.
 
 On the alarm face, the LIGHT button enters and advances alarm-time setting,

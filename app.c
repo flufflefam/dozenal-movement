@@ -460,12 +460,6 @@ static void handle_mode_button_press(void) {
 }
 
 static void handle_light_button_press(void) {
-    if (g_state.app_mode == WATCH_MODE_CLOCK ||
-        g_state.app_mode == WATCH_MODE_ALARM ||
-        g_state.app_mode == WATCH_MODE_STOPWATCH) {
-        watch_set_led_color_rgb(255, 255, 255);
-    }
-
     if (g_state.app_mode == WATCH_MODE_CLOCK) {
         return;
     }
@@ -580,7 +574,8 @@ static void cb_mode_pin(void) {
 }
 
 static void cb_light_pin(void) {
-    if (!HAL_GPIO_BTN_LIGHT_read()) {
+    if (HAL_GPIO_BTN_LIGHT_read()) {
+        watch_set_led_green();
         handle_light_button_press();
     } else {
         watch_set_led_off();
