@@ -224,8 +224,9 @@ bool alarm_face_loop(movement_event_t event, void *context) {
                     state->alarm_button_repeat_active = false;
                     movement_request_tick_frequency(4);
                 }
+            } else {
+                if (event.subsecond % 2 == 0) _alarm_face_blink_setting(state);
             }
-            if (event.subsecond % 2 == 0) _alarm_face_blink_setting(state);
             break;
         case EVENT_LIGHT_BUTTON_DOWN:
             state->upper_button_pressed = true;
