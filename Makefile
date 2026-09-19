@@ -51,6 +51,7 @@ INCLUDES += \
   -I./utz \
   -I./watch-library/shared/watch \
   -I./watch-library/shared/driver \
+  -I$(GOSSAMER_PATH)/drivers/tinyusb/src/ \
 
 # Add your source files here.
 SRCS += \
