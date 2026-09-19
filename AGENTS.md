@@ -24,6 +24,8 @@ This project aims to reproduce the original Casio F-91W firmware, including
 the same clock faces. In addition to AM/PM, it provides two additional time
 formats: diurnal and semidiurnal (collectively referred to as dozenal time).
 
+The official Casio F-91W user manual (Module 593) is included in this repository as [`MANUAL.md`](MANUAL.md), which serves as the authoritative source on how the gossamer app should behave.
+
 Unless specified otherwise, scope changes only to the four active clock faces that are enabled and part of the standard Casio F-91W firmware rotation (`clock_face`, `alarm_face`, `fast_stopwatch_face`, and `set_time_face`).
 
 ## Original Firmware Parity
