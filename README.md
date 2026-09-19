@@ -1,7 +1,7 @@
 Dozenal Watch (Direct Gossamer App)
 ==================================
 
-[![Latest Simulator](https://img.shields.io/badge/Simulator-Latest%20Firmware-2ea44f)](https://flufflefam.github.io/dozenal-movement/simulator/firmware.html)
+[![Latest Simulator](https://img.shields.io/badge/Simulator-App%20Rewrite%20Firmware-2ea44f)](https://flufflefam.github.io/dozenal-movement/simulator/firmware.html)
 
 A direct, low-power standalone application implementation on top of the [Gossamer](https://github.com/joeycastillo/gossamer) hardware abstraction layer for the [Sensor Watch extension board](https://www.sensorwatch.net/), matching the exact functional behavior and navigation of a Casio F-91W with [dozenal and semidiurnal timekeeping modes](https://clocks.dozenal.ca/).
 
@@ -18,7 +18,7 @@ python3 -m http.server -d build-sim
 
 Power & Battery Consumption Analysis
 ------------------------------------
-By completely discarding the heavy Movement framework, filesystem drivers, shell tasks, and multi-face overhead, this directGossamer app minimizes CPU wake cycles and active background power consumption.
+By completely discarding the heavy Movement framework, filesystem drivers, shell tasks, and multi-face overhead, this direct Gossamer app minimizes CPU wake cycles and active background power consumption.
 
 ### Microcontroller & Peripheral Operating Parameters (SAML22)
 * **Supply Voltage**: 3.0 V (CR2016 Lithium Coin Cell, Nominal Capacity: **90 mAh** / 90,000 µAh)

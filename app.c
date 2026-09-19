@@ -370,20 +370,43 @@ static void render_set_time_face(void) {
             snprintf(buf, sizeof(buf), "%02d%02d%02d", h, dt.unit.minute, dt.unit.second);
         }
 
+        char day_str[3];
+        snprintf(day_str, sizeof(day_str), "%02d", dt.unit.day);
+
+        // Blinking active field
         if (g_state.blink_state) {
             switch (g_state.set_time_field) {
                 case 0: buf[4] = ' '; buf[5] = ' '; break; // sec
                 case 1: buf[0] = ' '; buf[1] = ' '; break; // hour
                 case 2: buf[2] = ' '; buf[3] = ' '; break; // min
-                default: break;
+                case 3: // year
+                case 4: // month
+                case 5: // day
+                    break;
             }
         }
 
-        watch_display_text_with_fallback(WATCH_POSITION_TOP_LEFT, watch_utility_get_long_weekday(dt), watch_utility_get_weekday(dt));
-        char day_str[3];
-        snprintf(day_str, sizeof(day_str), "%02d", dt.unit.day);
-        watch_display_text(WATCH_POSITION_TOP_RIGHT, day_str);
-        watch_display_text(WATCH_POSITION_BOTTOM, buf);
+        if (g_state.set_time_field >= 3) {
+            // Render Year / Month / Day setting on top/bottom display
+            char date_str[7];
+            snprintf(date_str, sizeof(date_str), "%04d%02d", dt.unit.year + WATCH_RTC_REFERENCE_YEAR, dt.unit.month);
+            if (g_state.blink_state) {
+                if (g_state.set_time_field == 3) { // year
+                    date_str[0] = ' '; date_str[1] = ' '; date_str[2] = ' '; date_str[3] = ' ';
+                } else if (g_state.set_time_field == 4) { // month
+                    date_str[4] = ' '; date_str[5] = ' ';
+                } else if (g_state.set_time_field == 5) { // day
+                    day_str[0] = ' '; day_str[1] = ' ';
+                }
+            }
+            watch_display_text_with_fallback(WATCH_POSITION_TOP_LEFT, watch_utility_get_long_weekday(dt), watch_utility_get_weekday(dt));
+            watch_display_text(WATCH_POSITION_TOP_RIGHT, day_str);
+            watch_display_text(WATCH_POSITION_BOTTOM, date_str);
+        } else {
+            watch_display_text_with_fallback(WATCH_POSITION_TOP_LEFT, watch_utility_get_long_weekday(dt), watch_utility_get_weekday(dt));
+            watch_display_text(WATCH_POSITION_TOP_RIGHT, day_str);
+            watch_display_text(WATCH_POSITION_BOTTOM, buf);
+        }
     }
 }
 
@@ -586,7 +609,7 @@ static void cb_tick(void) {
         g_state.blink_state = !g_state.blink_state;
     }
 
-    if (g_state.sw_running && !g_state.sw_lap_active) {
+    if (g_state.sw_running) {
         g_state.sw_elapsed_ticks += 1;
     }
 
