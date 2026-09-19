@@ -1,83 +1,47 @@
-Dozenal Watch
-=============
+Dozenal Watch (Direct Gossamer App)
+==================================
 
-[![Latest Simulator](https://img.shields.io/badge/Simulator-Latest%20Firmware-2ea44f)](https://flufflefam.github.io/dozenal-movement/simulator/firmware.html)
+[![Latest Simulator](https://img.shields.io/badge/Simulator-App%20Rewrite%20Firmware-2ea44f)](https://flufflefam.github.io/dozenal-movement/simulator/app-rewrite-firmware.html)
 
-A work-in-progress [dozenal timekeeping adaptation](https://clocks.dozenal.ca/) of Casio wristwatches with a [Sensor Watch extension board](https://www.sensorwatch.net/).
-
-Emulator build:
-```
-emmake make BOARD=sensorwatch_pro DISPLAY=custom
-python3 -m http.server -d build-sim
-```
+A direct, low-power standalone application implementation on top of the [Gossamer](https://github.com/joeycastillo/gossamer) hardware abstraction layer for the [Sensor Watch extension board](https://www.sensorwatch.net/), matching the exact functional behavior and navigation of a Casio F-91W with [dozenal and semidiurnal timekeeping modes](https://clocks.dozenal.ca/).
 
 Firmware build:
-```
+```sh
 make BOARD=sensorwatch_pro DISPLAY=custom
 ```
 
-(Original README below..)
-
----
-
-Second Movement
-===============
-
-This is the successor refactor of the Movement firmware for [Sensor Watch](https://www.sensorwatch.net).
-
-
-Getting dependencies
--------------------------
-You will need to install [the GNU Arm Embedded Toolchain](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads/) to build projects for the watch. If you're using Debian or Ubuntu, it should be sufficient to `apt install gcc-arm-none-eabi`.
-
-You will need to fetch the git submodules for this repository too, with `git submodule update --init --recursive` 
-
-
-Building Second Movement
-----------------------------
-You can build the default watch firmware with:
-
-```
-make BOARD=board_type DISPLAY=display_type
-```
-
-where `board_type` is any of:
-- sensorwatch_pro
-- sensorwatch_green  
-- sensorwatch_red (also known as Sensor Watch Lite)
-- sensorwatch_blue
-
-and `display_type` is any of:
-- classic
-- custom
-
-Optionally you can set the watch time when building the firmware using `TIMESET=minute`. 
-
-`TIMESET` can be defined as:
-- `year` = Sets the year to the PC's
-- `day` = Sets the default time down to the day (year, month, day)
-- `minute` = Sets the default time down to the minute (year, month, day, hour, minute)
-
-
-If you'd like to modify which faces are built and included in the firmware, edit `movement_config.h`. You will get a compilation error if you enable more faces than the watch can store.
-
-Installing firmware to the watch
-----------------------------
-To install the firmware onto your Sensor Watch board, plug the watch into your USB port and double tap the tiny Reset button on the back of the board. You should see the LED light up red and begin pulsing. (If it does not, make sure you didn’t plug the board in upside down). Once you see the `WATCHBOOT` drive appear on your desktop, type `make install`. This will convert your compiled program to a UF2 file, and copy it over to the watch.
-
-If you want to do this step manually, copy `/build/firmware.uf2` to your watch. 
-
-
-Emulating the firmware
-----------------------------
-You may want to test out changes in the emulator first. To do this, you'll need to install [emscripten](https://emscripten.org/), then run:
-
-```
+Emulator build:
+```sh
 emmake make BOARD=sensorwatch_red DISPLAY=classic
 python3 -m http.server -d build-sim
 ```
 
-Finally, visit [firmware.html](http://localhost:8000/firmware.html) to see your work.
+Power & Battery Consumption Analysis
+------------------------------------
+By completely discarding the heavy Movement framework, filesystem drivers, shell tasks, and multi-face overhead, this direct Gossamer app minimizes CPU wake cycles and active background power consumption.
 
-The latest `main` build for the sensorwatch_pro custom display is also available at
-[the hosted simulator](https://flufflefam.github.io/dozenal-movement/simulator/firmware.html).
+### Microcontroller & Peripheral Operating Parameters (SAML22)
+* **Supply Voltage**: 3.0 V (CR2016 Lithium Coin Cell, Nominal Capacity: **90 mAh** / 90,000 µAh)
+* **STANDBY Sleep Mode Current ($I_{sleep}$)**: ~3.5 µA (SAML22 RTC running @ 32.768 kHz + SLCD driver active)
+* **CPU Active Mode Current ($I_{active}$)**: ~120 µA/MHz (CPU running at 4 MHz $\approx 480$ µA during active interrupt processing)
+* **Active Wake Duration per Tick**: $\approx 0.5$ ms per interrupt tick
+
+### Power Analysis by Mode
+
+1. **Standard 12H / 24H Clock Mode (1 Hz Tick Rate)**:
+   - **Sleep current**: $3.5\text{ }\mu\text{A}$
+   - **Active current contribution**: $480\text{ }\mu\text{A} \times \frac{0.5\text{ ms}}{1000\text{ ms}} = 0.24\text{ }\mu\text{A}$
+   - **Total Average Current ($I_{avg}$)**: $\approx 3.74\text{ }\mu\text{A}$
+   - **Estimated Battery Life**:
+     $$\text{Battery Life} = \frac{90,000\text{ }\mu\text{Ah}}{3.74\text{ }\mu\text{A}} \approx 24,064\text{ hours} \approx \mathbf{2.74\text{ years}}$$
+
+2. **Dozenal / Semidiurnal Active Display Mode (16 Hz Tick Rate)**:
+   - **Sleep current**: $3.5\text{ }\mu\text{A}$
+   - **Active current contribution**: $16 \times \left(480\text{ }\mu\text{A} \times \frac{0.5\text{ ms}}{1000\text{ ms}}\right) = 3.84\text{ }\mu\text{A}$
+   - **Total Average Current ($I_{avg}$)**: $\approx 7.34\text{ }\mu\text{A}$
+   - **Estimated Battery Life**:
+     $$\text{Battery Life} = \frac{90,000\text{ }\mu\text{Ah}}{7.34\text{ }\mu\text{A}} \approx 12,261\text{ hours} \approx \mathbf{1.40\text{ years}}$$
+
+3. **Stopwatch Active Mode / Fast Tick (100 Hz Tick Rate)**:
+   - **Active current contribution**: $100 \times \left(480\text{ }\mu\text{A} \times \frac{0.5\text{ ms}}{1000\text{ ms}}\right) = 24\text{ }\mu\text{A}$
+   - **Total Average Current ($I_{avg}$)**: $\approx 27.5\text{ }\mu\text{A}$
