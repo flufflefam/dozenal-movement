@@ -460,8 +460,13 @@ static void handle_mode_button_press(void) {
 }
 
 static void handle_light_button_press(void) {
-    if (g_state.app_mode == WATCH_MODE_CLOCK) {
+    if (g_state.app_mode == WATCH_MODE_CLOCK ||
+        g_state.app_mode == WATCH_MODE_ALARM ||
+        g_state.app_mode == WATCH_MODE_STOPWATCH) {
         watch_set_led_color_rgb(255, 255, 255);
+    }
+
+    if (g_state.app_mode == WATCH_MODE_CLOCK) {
         return;
     }
 
