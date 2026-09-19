@@ -292,9 +292,11 @@ static bool _clock_loop(movement_event_t event, world_clock2_state_t *state)
             _clock_display(event, state);
             break;
         case EVENT_LIGHT_BUTTON_DOWN:
-            /* Do nothing. No light. */
+            movement_illuminate_led();
             break;
         case EVENT_LIGHT_BUTTON_UP:
+        case EVENT_LIGHT_LONG_UP:
+            movement_force_led_off();
             refresh_face = true;
             state->current_zone = _next_selected_zone(state, BACKWARD);
             state->show_zone_name = NAME_DISPLAY_TIME;
@@ -351,11 +353,13 @@ static bool _settings_loop(movement_event_t event, world_clock2_state_t *state)
             _settings_display(event, state);
             break;
         case EVENT_LIGHT_BUTTON_UP:
+        case EVENT_LIGHT_LONG_UP:
+            movement_force_led_off();
             state->current_zone = mod(state->current_zone + BACKWARD, NUM_ZONE_NAMES);
             _settings_display(event, state);
             break;
         case EVENT_LIGHT_BUTTON_DOWN:
-            /* Do nothing. No light. */
+            movement_illuminate_led();
             break;
         case EVENT_ALARM_LONG_PRESS:
             /* Toggle selection of current zone */

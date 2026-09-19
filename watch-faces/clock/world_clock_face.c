@@ -240,6 +240,7 @@ static bool _world_clock_face_do_settings_mode(movement_event_t event, world_clo
             movement_move_to_next_face();
             return false;
         case EVENT_LIGHT_BUTTON_DOWN:
+            movement_illuminate_led();
             state->current_screen++;
             is_custom_lcd = watch_get_lcd_type() == WATCH_LCD_TYPE_CUSTOM;
             if ((is_custom_lcd && state->current_screen > 4) || (!is_custom_lcd && state->current_screen > 3)) {
@@ -250,6 +251,10 @@ static bool _world_clock_face_do_settings_mode(movement_event_t event, world_clo
                 event.event_type = EVENT_ACTIVATE;
                 return world_clock_face_do_display_mode(event, state);
             }
+            break;
+        case EVENT_LIGHT_BUTTON_UP:
+        case EVENT_LIGHT_LONG_UP:
+            movement_force_led_off();
             break;
         case EVENT_ALARM_BUTTON_DOWN:
             switch (state->current_screen) {

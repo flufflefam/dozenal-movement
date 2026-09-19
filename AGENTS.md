@@ -22,6 +22,8 @@ This project aims to reproduce the original Casio F-91W firmware, including
 the same clock faces. In addition to AM/PM, it provides two additional time
 formats: Dozenal and Semidiurnal.
 
+Unless specified otherwise, scope changes only to the four active clock faces that are enabled and part of the standard Casio F-91W firmware rotation (`clock_face`, `alarm_face`, `fast_stopwatch_face`, and `set_time_face`).
+
 ## Original Firmware Parity
 
 Match the original F-91W's capabilities as well as its appearance. For
@@ -117,8 +119,10 @@ the lower-right ALARM button, followed by the lower-left MODE button, returns to
 the main clock face. Preserve this original Casio navigation behavior when
 changing those faces.
 
-On the alarm and stopwatch screens, pressing the upper-left LIGHT button turns
-on the backlight when pressed, in addition to performing its existing mode function.
+On all four screens (clock, alarm and stopwatch set time), pressing down the 
+upper-left LIGHT button turns the backlight on, and releasing (de-pressing) it 
+turns the backlight off immediately without delay, matching original 
+Casio F-91W hardware behavior.
 
 On the alarm face, the LIGHT button enters and advances alarm-time setting,
 while the lower-right ALARM button adjusts the selected value during setting
@@ -139,6 +143,49 @@ few seconds. A short ALARM press continues to cycle time modes.
 Dozenal movement uses `fast_stopwatch_face` for the stopwatch unless the
 configuration explicitly selects a different stopwatch face. Apply stopwatch
 behavior changes to the active face accordingly.
+
+## User Interface Discrepancies (Original Casio F-91W vs. Current Firmware)
+
+The following list documents discrepancies between an unmodified Casio F-91W user interface and the current firmware implementation:
+
+### 1. Main Timekeeping Face & Time Modes
+- **Time Modes:** Unmodified F-91W only supports standard 12-hour and 24-hour time modes. Current firmware adds `DIURNAL` (dozenal base-12 time) and `SEMIDIURNAL` time modes.
+- **ALARM Button Function on Main Clock:**
+  - *Original F-91W:* Pressing ALARM toggles between 12-hour and 24-hour display modes (showing a "24H" indicator in 24H mode). Holding ALARM sounds the alarm buzzer for testing.
+  - *Current UI:* Short-pressing ALARM cycles through all available time modes (`12H` -> `24H` -> `DIURNAL` -> `SEMIDIURNAL`). Holding ALARM temporarily displays the full year-month-date in the active time mode before returning to time display.
+- **Date Display:** Unmodified F-91W displays day-of-week abbreviation and day-of-month (e.g. `SU  25`) at top-right. Current UI displays full date (including 4-digit year, month, day, or dozenal equivalents) depending on active mode and interactions.
+
+### 2. Time Setting Face (`set_time_face`)
+- **Access & Mode Structure:**
+  - *Original F-91W:* Time setting is entered by pressing MODE 3 times from main clock (seconds flash immediately upon entry).
+  - *Current UI:* Time setting is a standalone watch face (`set_time_face`) in face rotation/secondary menu with titled pages ("Year", "Month", "Day", "Z" Time Zone, "Hour", "Minut", "Secnd").
+- **Editable Fields:**
+  - *Original F-91W:* Editable fields sequence: Seconds -> Hours -> Minutes -> Month -> Date -> Day of Week.
+  - *Current UI:* Includes Year setting and Time Zone ("Z") selection. Does not have a separate Day of Week edit step (calculated automatically).
+- **Seconds Reset Behavior:**
+  - *Original F-91W:* Pressing ALARM while seconds are blinking resets seconds to 00. If seconds were 30–59, minutes increment by 1.
+  - *Current UI:* Pressing ALARM in decimal modes resets seconds to 0 without incrementing minutes, or advances by digit-4 increments in Dozenal/Semidiurnal modes.
+
+### 3. Alarm Face (`alarm_face`)
+- **Alarm Sound Test vs Hold Repeat:**
+  - *Original F-91W:* Holding ALARM while viewing alarm time plays the alarm buzzer as a test.
+  - *Current UI:* Holding ALARM in normal view does not sound a test buzzer. In setting mode, holding ALARM continuously advances the active digit group after a long-press delay.
+- **Setting Mode Entry:**
+  - *Original F-91W:* Pressing LIGHT in Alarm view immediately enters hour setting (hours flash).
+  - *Current UI:* Pressing LIGHT or long-pressing LIGHT enters setting mode.
+
+### 4. Stopwatch Face (`fast_stopwatch_face` / `stopwatch_face`)
+- **Rollover & Range:**
+  - *Original F-91W:* Stopwatch counts up to 59:59.99 (59 minutes, 59.99 seconds) and rolls over to 00:00.00.
+  - *Current UI:* Tracks elapsed time up to 24 hours, displaying hours in the top right corner when hours > 0.
+- **LIGHT Button Long Press:**
+  - *Original F-91W:* LIGHT button only illuminates LCD backlight (or handles lap/reset).
+  - *Current UI:* Long pressing LIGHT button toggles slow refresh rate mode and LED behavior on button press.
+
+### 5. Navigation & Secondary Menus
+- **Mode Cycle & Navigation:**
+  - *Original F-91W:* Fixed mode sequence (Timekeeping -> Alarm -> Stopwatch -> Time Setting -> Timekeeping).
+  - *Current UI:* Configurable list of watch faces via `watch_faces[]` in `movement_config.h`, with optional secondary face menu on long MODE press (`MOVEMENT_SECONDARY_FACE_INDEX`). Retains original Casio shortcut (pressing LIGHT/ALARM then MODE returns to main clock) on Alarm and Stopwatch faces.
 
 ## Original Firmware Documentation
 
