@@ -25,15 +25,15 @@ jobs:
       - name: Ensure workspace directory is defined as safe
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Compile sensorwatch_pro custom simulator
-        run: emmake make BOARD=sensorwatch_pro DISPLAY=custom
+        run: emmake make BOARD=sensorwatch_pro DISPLAY=custom BIN=${{ github.ref_name }}-firmware
       - name: Upload simulator
         uses: actions/upload-artifact@v4
         with:
           name: sensorwatch-pro-custom-simulator
           path: |
-            build-sim/firmware.html
-            build-sim/firmware.js
-            build-sim/firmware.wasm
+            build-sim/${{ github.ref_name }}-firmware.html
+            build-sim/${{ github.ref_name }}-firmware.js
+            build-sim/${{ github.ref_name }}-firmware.wasm
 
   gh-pages:
     needs: build-simulator
