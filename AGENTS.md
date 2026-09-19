@@ -117,6 +117,8 @@ the lower-right ALARM button, followed by the lower-left MODE button, returns to
 the main clock face. Preserve this original Casio navigation behavior when
 changing those faces.
 
+On all clock faces, pressing down the upper-left LIGHT button turns the backlight on, and releasing (de-pressing) it turns the backlight off immediately without delay, matching original Casio F-91W hardware behavior.
+
 On the alarm face, the LIGHT button enters and advances alarm-time setting,
 while the lower-right ALARM button adjusts the selected value during setting
 and cycles through alarm off, hourly chime, alarm, and both in normal mode.
