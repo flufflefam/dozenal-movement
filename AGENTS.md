@@ -22,6 +22,8 @@ This project aims to reproduce the original Casio F-91W firmware, including
 the same clock faces. In addition to AM/PM, it provides two additional time
 formats: Dozenal and Semidiurnal.
 
+Unless specified otherwise, scope changes only to the four active clock faces that are enabled and part of the standard Casio F-91W firmware rotation (`clock_face`, `alarm_face`, `fast_stopwatch_face`, and `set_time_face`).
+
 ## Original Firmware Parity
 
 Match the original F-91W's capabilities as well as its appearance. For
@@ -116,6 +118,8 @@ On the alarm and stopwatch faces, pressing either the upper-left LIGHT button or
 the lower-right ALARM button, followed by the lower-left MODE button, returns to
 the main clock face. Preserve this original Casio navigation behavior when
 changing those faces.
+
+On all clock faces, pressing down the upper-left LIGHT button turns the backlight on, and releasing (de-pressing) it turns the backlight off immediately without delay, matching original Casio F-91W hardware behavior.
 
 On the alarm face, the LIGHT button enters and advances alarm-time setting,
 while the lower-right ALARM button adjusts the selected value during setting

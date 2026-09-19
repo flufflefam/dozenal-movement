@@ -139,12 +139,14 @@ bool mars_time_face_loop(movement_event_t event, void *context) {
         case EVENT_TICK:
             _update(state, false);
             break;
+        case EVENT_LIGHT_BUTTON_DOWN:
+            movement_illuminate_led();
+            break;
         case EVENT_LIGHT_BUTTON_UP:
+        case EVENT_LIGHT_LONG_UP:
+            movement_force_led_off();
             state->displaying_sol = !state->displaying_sol;
             _update(state, false);
-            break;
-        case EVENT_LIGHT_LONG_PRESS:
-            movement_illuminate_led();
             break;
         case EVENT_ALARM_LONG_PRESS:
             state->current_site = (state->current_site + 1) % MARS_TIME_NUM_SITES;
@@ -157,9 +159,6 @@ bool mars_time_face_loop(movement_event_t event, void *context) {
                 watch_start_indicator_blink_if_possible(WATCH_INDICATOR_COLON, 514);
             }
             _update(state, true);
-            break;
-        case EVENT_LIGHT_BUTTON_DOWN:
-            // don't light up every time light is hit
             break;
         default:
             movement_default_loop_handler(event);
