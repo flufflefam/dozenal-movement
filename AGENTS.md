@@ -22,7 +22,7 @@ git submodule update --init --recursive
 
 This project aims to reproduce the original Casio F-91W firmware, including
 the same clock faces. In addition to AM/PM, it provides two additional time
-formats: Diurnal and Semidiurnal (collectively referred to as dozenal time).
+formats: diurnal and semidiurnal (collectively referred to as dozenal time).
 
 Unless specified otherwise, scope changes only to the four active clock faces that are enabled and part of the standard Casio F-91W firmware rotation (`clock_face`, `alarm_face`, `fast_stopwatch_face`, and `set_time_face`).
 
@@ -35,9 +35,9 @@ digit-4 alarm setting or display digit 4 as an alarm value merely because the
 main clock face displays it. Preserve the original alarm's supported precision
 when adapting its controls to other time modes.
 
-The set-time face is another firmware-parity surface. In Diurnal and Semidiurnal modes (dozenal time), group the
+The set-time face is another firmware-parity surface. In diurnal and semidiurnal modes (dozenal time), group the
 editable digits the same way as the alarm face: digit 1 as the first group (including the
-Semidiurnal leading half-day digit), digits 2 and 3 together as the second group, and digit 4 as
+semidiurnal leading half-day digit), digits 2 and 3 together as the second group, and digit 4 as
 the third group. The selected group must blink and advance together; do not expose the decimal
 hour, minute, and second fields as independent controls in these modes. The RTC stores whole
 seconds, so digit-4 setting uses the nearest whole-second increment rather than inventing
@@ -65,20 +65,20 @@ first digit changes every 2 hours. The entire set of digits is the following:
 
 The day begins at midnight, time `000.0(0)`.
 
-On the SensorWatch display, Dozenal digit ten is represented by the glyph `2`
+On the SensorWatch display, dozenal digit ten is represented by the glyph `2`
 with its top horizontal segment removed. It is rendered directly through the
-LCD segment map rather than as ordinary text. Dozenal digit eleven is displayed
+LCD segment map rather than as ordinary text. dozenal digit eleven is displayed
 as `E`.
 
 ## Semidiurnal Time
 
-In this codebase, Semidiurnal time is the Diurnal time display compressed into
-two equal half-day cycles. Every Diurnal digit changes twice as often: each
-Diurnal interval is divided by 2. A leading digit, `0` or `1`, identifies which
-half of the day is being displayed, followed by the regular Diurnal digits.
+In this codebase, semidiurnal time is the diurnal time display compressed into
+two equal half-day cycles. Every diurnal digit changes twice as often: each
+diurnal interval is divided by 2. A leading digit, `0` or `1`, identifies which
+half of the day is being displayed, followed by the regular diurnal digits.
 
 This definition is inferred from the standard clock implementation: the
-Semidiurnal mode applies a factor of 2 to the Diurnal digit frequencies and
+semidiurnal mode applies a factor of 2 to the diurnal digit frequencies and
 displays the leading half-day digit, while the ordinary AM/PM mode remains a
 separate 12-hour display mode.
 
@@ -90,23 +90,23 @@ mode and its native increments:
 
 - `12H`: 12-hour time with an AM/PM indicator.
 - `24H`: 24-hour time.
-- `DIURNAL`: the Diurnal digit frequencies defined above.
-- `SEMIDIURNAL`: the Diurnal digit frequencies divided by 2, with the leading
+- `DIURNAL`: the diurnal digit frequencies defined above.
+- `SEMIDIURNAL`: the diurnal digit frequencies divided by 2, with the leading
 	half-day digit defined above.
 
 Do not display or advance time or alarm fields using fixed decimal hour and
-minute increments when the selected mode is dozenal (Diurnal or Semidiurnal). Preserve
+minute increments when the selected mode is dozenal (diurnal or semidiurnal). Preserve
 the selected mode while entering, editing, displaying, and confirming values.
 Setting or repeating a value always advances it by one unit in the current
 display mode. In `12H` and `24H`, one hour is 3600 seconds and one minute is
 60 seconds. In `DIURNAL`, one displayed hour is two decimal hours and the
 alarm's minute group advances by 50 decimal seconds. In `SEMIDIURNAL`, those
-Diurnal intervals are divided by two. The two-hour Diurnal hour interval is
+diurnal intervals are divided by two. The two-hour diurnal hour interval is
 therefore the conversion for one displayed unit, not a request to skip two
 displayed units.
 
 Date components shown by active faces use the same display mode. In dozenal modes
-(Diurnal and Semidiurnal), convert numeric date components independently to base
+(diurnal and semidiurnal), convert numeric date components independently to base
 12 using the existing time glyphs: ten is the `2` glyph with its top horizontal
 segment removed, and eleven is displayed as `E`. For example, decimal
 `2026-01-10` is displayed with the equivalent glyphs for `120` plus dozenal
@@ -166,7 +166,7 @@ The following list documents discrepancies between an unmodified Casio F-91W use
   - *Current UI:* Includes Year setting and Time Zone ("Z") selection. Does not have a separate Day of Week edit step (calculated automatically).
 - **Seconds Reset Behavior:**
   - *Original F-91W:* Pressing ALARM while seconds are blinking resets seconds to 00. If seconds were 30–59, minutes increment by 1.
-  - *Current UI:* Pressing ALARM in decimal modes resets seconds to 0 without incrementing minutes, or advances by digit-4 increments in dozenal modes (Diurnal/Semidiurnal).
+  - *Current UI:* Pressing ALARM in decimal modes resets seconds to 0 without incrementing minutes, or advances by digit-4 increments in dozenal modes (diurnal/semidiurnal).
 
 ### 3. Alarm Face (`alarm_face`)
 - **Alarm Sound Test vs Hold Repeat:**
