@@ -22,6 +22,8 @@ This project aims to reproduce the original Casio F-91W firmware, including
 the same clock faces. In addition to AM/PM, it provides two additional time
 formats: Dozenal and Semidiurnal.
 
+Unless specified otherwise, scope changes only to the four active clock faces that are enabled and part of the standard Casio F-91W firmware rotation (`clock_face`, `alarm_face`, `fast_stopwatch_face`, and `set_time_face`).
+
 ## Original Firmware Parity
 
 Match the original F-91W's capabilities as well as its appearance. For
