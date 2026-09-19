@@ -117,6 +117,9 @@ the lower-right ALARM button, followed by the lower-left MODE button, returns to
 the main clock face. Preserve this original Casio navigation behavior when
 changing those faces.
 
+On the alarm and stopwatch screens, pressing the upper-left LIGHT button turns
+on the backlight when pressed, in addition to performing its existing mode function.
+
 On the alarm face, the LIGHT button enters and advances alarm-time setting,
 while the lower-right ALARM button adjusts the selected value during setting
 and cycles through alarm off, hourly chime, alarm, and both in normal mode.
