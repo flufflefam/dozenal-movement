@@ -1,21 +1,10 @@
 # Keep this first line.
 GOSSAMER_PATH=gossamer
 
-# Which board are we building for? Commented out to force a choice when building.
-# Options are:
-# - sensorwatch_pro
-# - sensorwatch_green
-# - sensorwatch_red (also known as Sensor Watch Lite)
-# - sensorwatch_blue
-# BOARD=sensorwatch_pro
-
-# Set this to the type of display in your watch: classic or custom. Commented out to force a choice when building.
-# DISPLAY=classic
-
 # End of user configurable options.
 
 # Support USB features?
-TINYUSB_CDC=1
+TINYUSB_CDC=0
 
 # Now we're all set to include gossamer's make rules.
 include $(GOSSAMER_PATH)/make.mk
@@ -55,63 +44,22 @@ ifeq (,$(filter clean,$(MAKECMDGOALS)))
   endif
 endif
 
-ifdef NOSLEEP
-    DEFINES += -DMOVEMENT_LOW_ENERGY_MODE_FORBIDDEN
-endif
-
-# Emscripten targets are now handled in rules.mk in gossamer
-
 # Add your include directories here.
 INCLUDES += \
   -I./ \
   -I. \
-  -I./tinyusb/src \
-  -I./littlefs \
   -I./utz \
-  -I./filesystem \
-  -I./shell \
-  -I./lib/sunriset \
-  -I./lib/sha1 \
-  -I./lib/sha256 \
-  -I./lib/sha512 \
-  -I./lib/base32 \
-  -I./lib/TOTP \
-  -I./lib/chirpy_tx \
-  -I./lib/base64 \
   -I./watch-library/shared/watch \
   -I./watch-library/shared/driver \
-  -I./watch-faces/clock \
-  -I./watch-faces/complication \
-  -I./watch-faces/demo \
-  -I./watch-faces/sensor \
-  -I./watch-faces/settings \
-  -I./watch-faces/io \
 
 # Add your source files here.
 SRCS += \
   ./dummy.c \
-  ./littlefs/lfs.c \
-  ./littlefs/lfs_util.c \
-  ./filesystem/filesystem.c \
   ./utz/utz.c \
   ./utz/zones.c \
-  ./shell/shell.c \
-  ./shell/shell_cmd_list.c \
-  ./lib/sunriset/sunriset.c \
-  ./lib/base32/base32.c \
-  ./lib/TOTP/sha1.c \
-  ./lib/TOTP/sha256.c \
-  ./lib/TOTP/sha512.c \
-  ./lib/TOTP/TOTP.c \
-  ./lib/chirpy_tx/chirpy_tx.c \
-  ./lib/base64/base64.c \
-  ./watch-library/shared/driver/thermistor_driver.c \
   ./watch-library/shared/watch/watch_common_buzzer.c \
   ./watch-library/shared/watch/watch_common_display.c \
   ./watch-library/shared/watch/watch_utility.c \
-
-
-SRCS += ./watch-library/shared/driver/lis2dw.c
 
 ifdef EMSCRIPTEN
 
@@ -153,15 +101,11 @@ SRCS += \
   ./watch-library/hardware/watch/watch_storage.c \
   ./watch-library/hardware/watch/watch_tcc.c \
   ./watch-library/hardware/watch/watch_uart.c \
-  ./watch-library/hardware/watch/watch_usb_descriptors.c \
-  ./watch-library/hardware/watch/watch_usb_cdc.c \
 
 endif
 
-include watch-faces.mk
-
 SRCS += \
-  ./movement.c \
+  ./app.c \
 
 # Finally, leave this line at the bottom of the file.
 include $(GOSSAMER_PATH)/rules.mk
