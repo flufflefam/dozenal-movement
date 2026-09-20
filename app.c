@@ -257,20 +257,23 @@ static void update_indicators(void) {
 
 static void render_clock_face(void) {
     if (g_state.alarm_btn_down) {
-        watch_clear_colon();
-        watch_display_text(WATCH_POSITION_TOP_LEFT, "  ");
-        watch_display_text(WATCH_POSITION_TOP_RIGHT, "  ");
-
-        static const char scroll_text[] = "      Dozenal Watch      ";
         uint32_t held_ticks = g_state.rtc_tick_counter - g_state.alarm_btn_down_ticks;
-        uint32_t frame = (held_ticks / 4) % 20;
+        if (held_ticks >= LONG_PRESS_TICKS) {
+            watch_clear_colon();
+            watch_display_text(WATCH_POSITION_TOP_LEFT, "  ");
+            watch_display_text(WATCH_POSITION_TOP_RIGHT, "  ");
 
-        char buf[7];
-        memcpy(buf, &scroll_text[frame], 6);
-        buf[6] = '\0';
+            static const char scroll_text[] = "      Dozenal Watch      ";
+            uint32_t anim_ticks = held_ticks - LONG_PRESS_TICKS;
+            uint32_t frame = (anim_ticks / 4) % 20;
 
-        watch_display_text(WATCH_POSITION_BOTTOM, buf);
-        return;
+            char buf[7];
+            memcpy(buf, &scroll_text[frame], 6);
+            buf[6] = '\0';
+
+            watch_display_text(WATCH_POSITION_BOTTOM, buf);
+            return;
+        }
     }
 
     watch_date_time_t dt = watch_rtc_get_date_time();
