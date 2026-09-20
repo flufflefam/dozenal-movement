@@ -260,7 +260,7 @@ static void render_clock_face(void) {
         uint32_t held_ticks = g_state.rtc_tick_counter - g_state.alarm_btn_down_ticks;
         if (held_ticks >= LONG_PRESS_TICKS) {
             watch_clear_colon();
-            watch_display_text(WATCH_POSITION_TOP_LEFT, "  ");
+            watch_display_text_with_fallback(WATCH_POSITION_TOP_LEFT, "   ", "  ");
             watch_display_text(WATCH_POSITION_TOP_RIGHT, "  ");
 
             static const char scroll_text[] = "      Dozenal Watch      ";
