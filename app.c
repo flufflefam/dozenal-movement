@@ -79,6 +79,10 @@ typedef struct {
     uint8_t current_tick_freq;
     uint32_t rtc_tick_counter;
     bool blink_state;
+
+    // Easter egg state
+    bool easter_egg_shown;
+    uint32_t easter_egg_start_tick;
 } app_state_t;
 
 static app_state_t g_state;
@@ -255,6 +259,27 @@ static void update_indicators(void) {
 }
 
 static void render_clock_face(void) {
+    if (g_state.easter_egg_shown) {
+        watch_clear_colon();
+        watch_display_text(WATCH_POSITION_TOP_LEFT, "  ");
+        watch_display_text(WATCH_POSITION_TOP_RIGHT, "  ");
+
+        uint32_t ticks_elapsed = g_state.rtc_tick_counter - g_state.easter_egg_start_tick;
+        uint32_t scroll_offset = ticks_elapsed / 4;
+
+        const char *padded_msg = "          Dozenal Watch          ";
+        char scroll_buf[11];
+
+        uint32_t max_offset = 33 - 10;
+        if (scroll_offset > max_offset) {
+            scroll_offset = max_offset;
+        }
+
+        snprintf(scroll_buf, sizeof(scroll_buf), "%s", padded_msg + scroll_offset);
+        watch_display_text(WATCH_POSITION_BOTTOM, scroll_buf);
+        return;
+    }
+
     watch_date_time_t dt = watch_rtc_get_date_time();
 
     if (g_state.time_mode == TIME_MODE_DIURNAL || g_state.time_mode == TIME_MODE_SEMIDIURNAL) {
@@ -570,6 +595,10 @@ static void cb_alarm_pin(void) {
     } else {
         g_state.alarm_btn_down = false;
         if (g_state.app_mode == WATCH_MODE_CLOCK) {
+            if (g_state.easter_egg_shown) {
+                g_state.easter_egg_shown = false;
+                return;
+            }
             // Pressing ALARM button in Clock mode cycles time display mode on release
             g_state.time_mode = (g_state.time_mode + 1) % TIME_MODE_NUM;
             play_beep(button_beep_tune);
@@ -595,6 +624,13 @@ static void cb_tick(void) {
             if (held_ticks >= HOLD_REPEAT_DELAY_TICKS && (held_ticks % HOLD_REPEAT_RATE_TICKS == 0)) {
                 if (g_state.app_mode == WATCH_MODE_ALARM) advance_alarm_value();
                 else advance_set_time_value();
+            }
+        } else if (g_state.app_mode == WATCH_MODE_CLOCK) {
+            if (held_ticks >= 48) { // 3 seconds at 16Hz
+                if (!g_state.easter_egg_shown) {
+                    g_state.easter_egg_shown = true;
+                    g_state.easter_egg_start_tick = g_state.rtc_tick_counter;
+                }
             }
         }
     }
