@@ -425,7 +425,11 @@ static void render_set_time_face(void) {
             clock_display_dozenal_day(dt);
         }
     } else {
-        watch_set_colon();
+        if (g_state.set_time_field >= 3) {
+            watch_clear_colon();
+        } else {
+            watch_set_colon();
+        }
         char buf[7];
         uint8_t h = dt.unit.hour;
         if (g_state.time_mode == TIME_MODE_12H) {
