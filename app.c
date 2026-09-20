@@ -733,6 +733,8 @@ void app_init(void) {
 void app_setup(void) {
     watch_enable_display();
 
+    watch_rtc_set_date_time(watch_get_init_date_time());
+
     g_state.app_mode = WATCH_MODE_CLOCK;
     g_state.time_mode = TIME_MODE_12H;
     g_state.current_tick_freq = 16;
