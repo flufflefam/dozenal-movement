@@ -108,6 +108,16 @@ static void clock_display_dozenal_value(uint32_t value, uint8_t digits, uint8_t 
 static void clock_display_dozenal_duration(uint32_t seconds, uint8_t subsecond, uint8_t tick_freq, time_display_mode_t mode, bool show_extra_digit);
 static void clock_display_dozenal_day(watch_date_time_t date_time);
 
+static bool is_quick_cycling(void) {
+    if (!g_state.alarm_btn_down) return false;
+    if ((g_state.app_mode == WATCH_MODE_ALARM && g_state.alarm_setting_active) ||
+        g_state.app_mode == WATCH_MODE_SET_TIME) {
+        uint32_t held_ticks = g_state.rtc_tick_counter - g_state.alarm_btn_down_ticks;
+        return held_ticks >= HOLD_REPEAT_DELAY_TICKS;
+    }
+    return false;
+}
+
 // --- Segment Glyph Helper ---
 static void clock_display_dozenal_digit(uint8_t digit, uint8_t position) {
     if (digit != 10) {
@@ -169,7 +179,7 @@ static void clock_display_dozenal_duration(uint32_t seconds, uint8_t subsecond, 
     bool group2_blink = false;
     bool group3_blink = false;
 
-    if (g_state.blink_state) {
+    if (g_state.blink_state && !is_quick_cycling()) {
         if (g_state.app_mode == WATCH_MODE_SET_TIME) {
             if (g_state.set_time_field == 0) group1_blink = true;
             else if (g_state.set_time_field == 1) group2_blink = true;
@@ -349,7 +359,7 @@ static void render_alarm_face(void) {
             snprintf(buf, sizeof(buf), "%02d%02d  ", h, g_state.alarm_minute);
         }
 
-        if (g_state.alarm_setting_active && g_state.blink_state) {
+        if (g_state.alarm_setting_active && g_state.blink_state && !is_quick_cycling()) {
             if (g_state.alarm_setting_field == 0) {
                 buf[0] = ' '; buf[1] = ' ';
             } else {
@@ -392,17 +402,17 @@ static void render_set_time_face(void) {
         watch_clear_colon();
         if (g_state.set_time_field >= 3) {
             watch_display_text_with_fallback(WATCH_POSITION_TOP_LEFT, watch_utility_get_long_weekday(dt), watch_utility_get_weekday(dt));
-            if (g_state.set_time_field == 5 && g_state.blink_state) {
+            if (g_state.set_time_field == 5 && g_state.blink_state && !is_quick_cycling()) {
                 watch_display_text(WATCH_POSITION_TOP_RIGHT, "  ");
             } else {
                 clock_display_dozenal_value(dt.unit.day, 2, 2);
             }
 
             uint16_t full_year = dt.unit.year + WATCH_RTC_REFERENCE_YEAR;
-            if (g_state.set_time_field == 3 && g_state.blink_state) {
+            if (g_state.set_time_field == 3 && g_state.blink_state && !is_quick_cycling()) {
                 watch_display_text(WATCH_POSITION_BOTTOM, "    ");
                 clock_display_dozenal_value(dt.unit.month, 2, 8);
-            } else if (g_state.set_time_field == 4 && g_state.blink_state) {
+            } else if (g_state.set_time_field == 4 && g_state.blink_state && !is_quick_cycling()) {
                 clock_display_dozenal_value(full_year, 4, 4);
                 watch_display_text(WATCH_POSITION_BOTTOM + 4, "  ");
             } else {
@@ -430,7 +440,7 @@ static void render_set_time_face(void) {
         snprintf(day_str, sizeof(day_str), "%02d", dt.unit.day);
 
         // Blinking active field
-        if (g_state.blink_state) {
+        if (g_state.blink_state && !is_quick_cycling()) {
             switch (g_state.set_time_field) {
                 case 0: buf[4] = ' '; buf[5] = ' '; break; // sec
                 case 1: buf[0] = ' '; buf[1] = ' '; break; // hour
@@ -446,7 +456,7 @@ static void render_set_time_face(void) {
             // Render Year / Month / Day setting on top/bottom display
             char date_str[7];
             snprintf(date_str, sizeof(date_str), "%04d%02d", dt.unit.year + WATCH_RTC_REFERENCE_YEAR, dt.unit.month);
-            if (g_state.blink_state) {
+            if (g_state.blink_state && !is_quick_cycling()) {
                 if (g_state.set_time_field == 3) { // year
                     date_str[0] = ' '; date_str[1] = ' '; date_str[2] = ' '; date_str[3] = ' ';
                 } else if (g_state.set_time_field == 4) { // month
