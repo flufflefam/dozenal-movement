@@ -300,8 +300,13 @@ static void render_clock_face(void) {
     if (g_state.time_mode == TIME_MODE_DIURNAL || g_state.time_mode == TIME_MODE_SEMIDIURNAL) {
         watch_clear_colon();
         uint32_t seconds = (((uint32_t)dt.unit.hour * 60) + dt.unit.minute) * 60 + dt.unit.second;
-        uint8_t subsecond = g_state.rtc_tick_counter % g_state.current_tick_freq;
-        clock_display_dozenal_duration(seconds, subsecond, g_state.current_tick_freq, g_state.time_mode, false);
+        uint32_t rtc_freq = watch_rtc_get_frequency();
+        uint32_t rtc_cnt = watch_rtc_get_counter();
+        // In watch_rtc.c, unix_time / dt updates at tick (rtc_freq / 2) (e.g. tick 64 for 128Hz).
+        // Therefore, subseconds in the current dt.unit.second phase start at 0 at tick 64,
+        // which corresponds to (rtc_cnt + (rtc_freq / 2)) % rtc_freq.
+        uint8_t subsecond = (rtc_cnt + (rtc_freq / 2)) % rtc_freq;
+        clock_display_dozenal_duration(seconds, subsecond, rtc_freq, g_state.time_mode, false);
         clock_display_dozenal_day(dt);
     } else {
         watch_set_colon();
