@@ -6,6 +6,8 @@ GOSSAMER_PATH=gossamer
 # Support USB features?
 TINYUSB_CDC=0
 
+TIMESET ?= minute
+
 # Now we're all set to include gossamer's make rules.
 include $(GOSSAMER_PATH)/make.mk
 

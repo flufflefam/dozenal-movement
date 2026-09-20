@@ -146,7 +146,7 @@ uint32_t watch_rtc_get_ticks_per_minute(void) {
 }
 
 rtc_date_time_t watch_get_init_date_time(void) {
-    rtc_date_time_t date_time;
+    rtc_date_time_t date_time = {0};
 #ifdef BUILD_YEAR
     date_time.unit.year = BUILD_YEAR;
 #else
