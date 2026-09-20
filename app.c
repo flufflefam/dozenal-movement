@@ -317,7 +317,8 @@ static void render_clock_face(void) {
     if (g_state.time_mode == TIME_MODE_DIURNAL || g_state.time_mode == TIME_MODE_SEMIDIURNAL) {
         watch_clear_colon();
         uint32_t seconds = (((uint32_t)dt.unit.hour * 60) + dt.unit.minute) * 60 + dt.unit.second;
-        clock_display_dozenal_duration(seconds, 0, g_state.current_tick_freq, g_state.time_mode, false);
+        uint8_t subsecond = g_state.rtc_tick_counter % g_state.current_tick_freq;
+        clock_display_dozenal_duration(seconds, subsecond, g_state.current_tick_freq, g_state.time_mode, false);
         clock_display_dozenal_day(dt);
     } else {
         watch_set_colon();
