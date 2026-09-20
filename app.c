@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 // Declarations for buzzer functions from watch_common_buzzer.c
 void watch_buzzer_play_sequence(int8_t *note_sequence, watch_cb_t callback);
@@ -255,6 +256,23 @@ static void update_indicators(void) {
 }
 
 static void render_clock_face(void) {
+    if (g_state.alarm_btn_down) {
+        watch_clear_colon();
+        watch_display_text(WATCH_POSITION_TOP_LEFT, "  ");
+        watch_display_text(WATCH_POSITION_TOP_RIGHT, "  ");
+
+        static const char scroll_text[] = "      Dozenal Watch      ";
+        uint32_t held_ticks = g_state.rtc_tick_counter - g_state.alarm_btn_down_ticks;
+        uint32_t frame = (held_ticks / 4) % 20;
+
+        char buf[7];
+        memcpy(buf, &scroll_text[frame], 6);
+        buf[6] = '\0';
+
+        watch_display_text(WATCH_POSITION_BOTTOM, buf);
+        return;
+    }
+
     watch_date_time_t dt = watch_rtc_get_date_time();
 
     if (g_state.time_mode == TIME_MODE_DIURNAL || g_state.time_mode == TIME_MODE_SEMIDIURNAL) {
@@ -568,11 +586,14 @@ static void cb_alarm_pin(void) {
         g_state.alarm_btn_down_ticks = g_state.rtc_tick_counter;
         handle_alarm_button_press();
     } else {
+        bool was_long_press = (g_state.rtc_tick_counter - g_state.alarm_btn_down_ticks) >= LONG_PRESS_TICKS;
         g_state.alarm_btn_down = false;
         if (g_state.app_mode == WATCH_MODE_CLOCK) {
-            // Pressing ALARM button in Clock mode cycles time display mode on release
-            g_state.time_mode = (g_state.time_mode + 1) % TIME_MODE_NUM;
-            play_beep(button_beep_tune);
+            // Pressing ALARM button in Clock mode cycles time display mode on short release
+            if (!was_long_press) {
+                g_state.time_mode = (g_state.time_mode + 1) % TIME_MODE_NUM;
+                play_beep(button_beep_tune);
+            }
         }
     }
 }
