@@ -417,6 +417,10 @@ static void handle_mode_button_press(void) {
     if (g_state.quick_return_to_clock && (g_state.app_mode == WATCH_MODE_ALARM || g_state.app_mode == WATCH_MODE_STOPWATCH)) {
         g_state.app_mode = WATCH_MODE_CLOCK;
         g_state.quick_return_to_clock = false;
+        g_state.alarm_setting_active = false;
+        g_state.alarm_setting_field = 0;
+        g_state.set_time_field = 0;
+        g_state.blink_state = false;
         play_beep(mode_return_tune);
         return;
     }
@@ -425,9 +429,13 @@ static void handle_mode_button_press(void) {
     watch_app_mode_t prev_mode = g_state.app_mode;
     g_state.app_mode = (g_state.app_mode + 1) % WATCH_MODE_NUM;
 
+    g_state.alarm_setting_active = false;
+    g_state.alarm_setting_field = 0;
+    g_state.set_time_field = 0;
+    g_state.blink_state = false;
+
     if (g_state.app_mode == WATCH_MODE_SET_TIME) {
         g_state.setting_dt = watch_rtc_get_date_time();
-        g_state.set_time_field = 0;
     } else if (prev_mode == WATCH_MODE_SET_TIME) {
         watch_rtc_set_date_time(g_state.setting_dt);
     }
@@ -627,6 +635,10 @@ void app_setup(void) {
     g_state.current_tick_freq = 16;
     g_state.last_alarm_triggered_minute = -1;
     g_state.last_chime_triggered_hour = -1;
+    g_state.alarm_setting_active = false;
+    g_state.alarm_setting_field = 0;
+    g_state.set_time_field = 0;
+    g_state.blink_state = false;
 
     watch_enable_external_interrupts();
     watch_register_interrupt_callback(HAL_GPIO_BTN_MODE_pin(), cb_mode_pin, INTERRUPT_TRIGGER_BOTH);
