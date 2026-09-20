@@ -20,6 +20,7 @@
 ### Regular Timekeeping Mode
 * Displays: Day of week, Date, Hour, Minute, Second, PM indicator (in 12-hour format).
 * **Changeover between 12-hour and 24-hour formats**: In regular timekeeping mode, with every push of **A**, the display is switched between 12-hour and 24-hour formats.
+* **Easter Egg (Authenticity Test / ALARM Long-Press)**: In regular timekeeping mode, pressing and holding the **A** (Alarm / 12/24-hour) button for approximately 3 seconds displays "CASIo" across the LCD screen. Releasing the **A** button returns to the regular timekeeping display.
 
 ### Mode Cycling
 From Regular timekeeping mode:

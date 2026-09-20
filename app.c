@@ -79,6 +79,10 @@ typedef struct {
     uint8_t current_tick_freq;
     uint32_t rtc_tick_counter;
     bool blink_state;
+
+    // Easter Egg state
+    bool easter_egg_active;
+    uint32_t easter_egg_ticks;
 } app_state_t;
 
 static app_state_t g_state;
@@ -257,6 +261,21 @@ static void update_indicators(void) {
 static void render_clock_face(void) {
     watch_date_time_t dt = watch_rtc_get_date_time();
 
+    if (g_state.easter_egg_active) {
+        watch_clear_colon();
+        watch_display_text_with_fallback(WATCH_POSITION_TOP_LEFT, watch_utility_get_long_weekday(dt), watch_utility_get_weekday(dt));
+        char day_str[3];
+        snprintf(day_str, sizeof(day_str), "%02d", dt.unit.day);
+        watch_display_text(WATCH_POSITION_TOP_RIGHT, day_str);
+
+        static const char banner[] = "      Dozenal Watch      ";
+        uint32_t pos = (g_state.easter_egg_ticks / 4) % 20;
+        char scroll_buf[7];
+        snprintf(scroll_buf, sizeof(scroll_buf), "%.6s", banner + pos);
+        watch_display_text(WATCH_POSITION_BOTTOM, scroll_buf);
+        return;
+    }
+
     if (g_state.time_mode == TIME_MODE_DIURNAL || g_state.time_mode == TIME_MODE_SEMIDIURNAL) {
         watch_clear_colon();
         uint32_t seconds = (((uint32_t)dt.unit.hour * 60) + dt.unit.minute) * 60 + dt.unit.second;
@@ -414,6 +433,9 @@ static void render_app(void) {
 // --- Button Handling & Mode Transitions ---
 
 static void handle_mode_button_press(void) {
+    g_state.easter_egg_active = false;
+    g_state.easter_egg_ticks = 0;
+
     if (g_state.quick_return_to_clock && (g_state.app_mode == WATCH_MODE_ALARM || g_state.app_mode == WATCH_MODE_STOPWATCH)) {
         g_state.app_mode = WATCH_MODE_CLOCK;
         g_state.quick_return_to_clock = false;
@@ -570,9 +592,14 @@ static void cb_alarm_pin(void) {
     } else {
         g_state.alarm_btn_down = false;
         if (g_state.app_mode == WATCH_MODE_CLOCK) {
-            // Pressing ALARM button in Clock mode cycles time display mode on release
-            g_state.time_mode = (g_state.time_mode + 1) % TIME_MODE_NUM;
-            play_beep(button_beep_tune);
+            if (g_state.easter_egg_active) {
+                g_state.easter_egg_active = false;
+                g_state.easter_egg_ticks = 0;
+            } else {
+                // Pressing ALARM button in Clock mode cycles time display mode on release
+                g_state.time_mode = (g_state.time_mode + 1) % TIME_MODE_NUM;
+                play_beep(button_beep_tune);
+            }
         }
     }
 }
@@ -591,7 +618,12 @@ static void cb_tick(void) {
     // Check ALARM button hold
     if (g_state.alarm_btn_down) {
         uint32_t held_ticks = g_state.rtc_tick_counter - g_state.alarm_btn_down_ticks;
-        if ((g_state.app_mode == WATCH_MODE_ALARM && g_state.alarm_setting_active) || g_state.app_mode == WATCH_MODE_SET_TIME) {
+        if (g_state.app_mode == WATCH_MODE_CLOCK) {
+            if (held_ticks >= LONG_PRESS_TICKS) {
+                g_state.easter_egg_active = true;
+                g_state.easter_egg_ticks++;
+            }
+        } else if ((g_state.app_mode == WATCH_MODE_ALARM && g_state.alarm_setting_active) || g_state.app_mode == WATCH_MODE_SET_TIME) {
             if (held_ticks >= HOLD_REPEAT_DELAY_TICKS && (held_ticks % HOLD_REPEAT_RATE_TICKS == 0)) {
                 if (g_state.app_mode == WATCH_MODE_ALARM) advance_alarm_value();
                 else advance_set_time_value();
