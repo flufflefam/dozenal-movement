@@ -61,6 +61,7 @@ typedef struct {
     bool chime_enabled;
     uint8_t alarm_hour;
     uint8_t alarm_minute;
+    uint8_t alarm_second;
     bool alarm_setting_active;
     uint8_t alarm_setting_field; // 0: hour, 1: minute
     int8_t last_alarm_triggered_minute;
@@ -164,54 +165,79 @@ static void clock_display_dozenal_duration(uint32_t seconds, uint8_t subsecond, 
     tsub -= dig4 * (dig4_sec / semidiurnal_adj);
     uint8_t dig5 = tsub / (dig5_sec / semidiurnal_adj);
 
+    bool group1_blink = false;
+    bool group2_blink = false;
+    bool group3_blink = false;
+
+    if (g_state.blink_state) {
+        if (g_state.app_mode == WATCH_MODE_SET_TIME) {
+            if (g_state.set_time_field == 0) group1_blink = true;
+            else if (g_state.set_time_field == 1) group2_blink = true;
+            else if (g_state.set_time_field == 2) group3_blink = true;
+        } else if (g_state.app_mode == WATCH_MODE_ALARM && g_state.alarm_setting_active) {
+            if (g_state.alarm_setting_field == 0) group1_blink = true;
+            else if (g_state.alarm_setting_field == 1) group2_blink = true;
+        }
+    }
+
     if (mode == TIME_MODE_DIURNAL) {
         watch_display_character(' ', 4);
-        if (!(g_state.app_mode == WATCH_MODE_SET_TIME && g_state.set_time_field == 0 && g_state.blink_state)) {
+        if (!group1_blink) {
             clock_display_dozenal_digit(dig1, 5);
         } else {
             watch_display_character(' ', 5);
         }
-        if (!(g_state.app_mode == WATCH_MODE_SET_TIME && g_state.set_time_field == 1 && g_state.blink_state)) {
+        if (!group2_blink) {
             clock_display_dozenal_digit(dig2, 6);
             clock_display_dozenal_digit(dig3, 7);
         } else {
             watch_display_character(' ', 6);
             watch_display_character(' ', 7);
         }
-        if (!(g_state.app_mode == WATCH_MODE_SET_TIME && g_state.set_time_field == 2 && g_state.blink_state)) {
-            clock_display_dozenal_digit(dig4, 8);
-        } else {
+        if (g_state.app_mode == WATCH_MODE_ALARM) {
             watch_display_character(' ', 8);
-        }
-        if (show_extra_digit) {
-            clock_display_dozenal_digit(dig5, 9);
-        } else {
             watch_display_character(' ', 9);
+        } else {
+            if (!group3_blink) {
+                clock_display_dozenal_digit(dig4, 8);
+            } else {
+                watch_display_character(' ', 8);
+            }
+            if (show_extra_digit) {
+                clock_display_dozenal_digit(dig5, 9);
+            } else {
+                watch_display_character(' ', 9);
+            }
         }
     } else if (mode == TIME_MODE_SEMIDIURNAL) {
-        if (!(g_state.app_mode == WATCH_MODE_SET_TIME && g_state.set_time_field == 0 && g_state.blink_state)) {
+        if (!group1_blink) {
             clock_display_dozenal_digit(dig0, 4);
             clock_display_dozenal_digit(dig1, 5);
         } else {
             watch_display_character(' ', 4);
             watch_display_character(' ', 5);
         }
-        if (!(g_state.app_mode == WATCH_MODE_SET_TIME && g_state.set_time_field == 1 && g_state.blink_state)) {
+        if (!group2_blink) {
             clock_display_dozenal_digit(dig2, 6);
             clock_display_dozenal_digit(dig3, 7);
         } else {
             watch_display_character(' ', 6);
             watch_display_character(' ', 7);
         }
-        if (!(g_state.app_mode == WATCH_MODE_SET_TIME && g_state.set_time_field == 2 && g_state.blink_state)) {
-            clock_display_dozenal_digit(dig4, 8);
-        } else {
+        if (g_state.app_mode == WATCH_MODE_ALARM) {
             watch_display_character(' ', 8);
-        }
-        if (show_extra_digit) {
-            clock_display_dozenal_digit(dig5, 9);
-        } else {
             watch_display_character(' ', 9);
+        } else {
+            if (!group3_blink) {
+                clock_display_dozenal_digit(dig4, 8);
+            } else {
+                watch_display_character(' ', 8);
+            }
+            if (show_extra_digit) {
+                clock_display_dozenal_digit(dig5, 9);
+            } else {
+                watch_display_character(' ', 9);
+            }
         }
     }
 }
@@ -309,7 +335,7 @@ static void render_alarm_face(void) {
 
     if (g_state.time_mode == TIME_MODE_DIURNAL || g_state.time_mode == TIME_MODE_SEMIDIURNAL) {
         watch_clear_colon();
-        uint32_t seconds = (((uint32_t)g_state.alarm_hour * 60) + g_state.alarm_minute) * 60;
+        uint32_t seconds = (((uint32_t)g_state.alarm_hour * 60) + g_state.alarm_minute) * 60 + g_state.alarm_second;
         clock_display_dozenal_duration(seconds, 0, 1, g_state.time_mode, false);
     } else {
         watch_set_colon();
@@ -337,18 +363,26 @@ static void render_alarm_face(void) {
 static void render_stopwatch_face(void) {
     watch_display_text(WATCH_POSITION_TOP_LEFT, "ST");
     watch_display_text(WATCH_POSITION_TOP_RIGHT, "  ");
-    watch_set_colon();
 
     uint32_t ticks = g_state.sw_lap_active ? g_state.sw_lap_ticks : g_state.sw_elapsed_ticks;
-    // 16 ticks per second -> scale ticks to hundredths (100 / 16 = 6.25)
-    uint32_t total_hundredths = (ticks * 100) / 16;
-    uint32_t mins = (total_hundredths / 6000) % 60;
-    uint32_t secs = (total_hundredths / 100) % 60;
-    uint32_t hundredths = total_hundredths % 100;
 
-    char buf[7];
-    snprintf(buf, sizeof(buf), "%02d%02d%02d", (uint8_t)mins, (uint8_t)secs, (uint8_t)hundredths);
-    watch_display_text(WATCH_POSITION_BOTTOM, buf);
+    if (g_state.time_mode == TIME_MODE_DIURNAL || g_state.time_mode == TIME_MODE_SEMIDIURNAL) {
+        watch_clear_colon();
+        uint32_t seconds = ticks / 16;
+        uint8_t subsecond = ticks % 16;
+        clock_display_dozenal_duration(seconds, subsecond, 16, g_state.time_mode, true);
+    } else {
+        watch_set_colon();
+        // 16 ticks per second -> scale ticks to hundredths (100 / 16 = 6.25)
+        uint32_t total_hundredths = (ticks * 100) / 16;
+        uint32_t mins = (total_hundredths / 6000) % 60;
+        uint32_t secs = (total_hundredths / 100) % 60;
+        uint32_t hundredths = total_hundredths % 100;
+
+        char buf[7];
+        snprintf(buf, sizeof(buf), "%02d%02d%02d", (uint8_t)mins, (uint8_t)secs, (uint8_t)hundredths);
+        watch_display_text(WATCH_POSITION_BOTTOM, buf);
+    }
 }
 
 static void render_set_time_face(void) {
@@ -356,9 +390,30 @@ static void render_set_time_face(void) {
 
     if (g_state.time_mode == TIME_MODE_DIURNAL || g_state.time_mode == TIME_MODE_SEMIDIURNAL) {
         watch_clear_colon();
-        uint32_t seconds = (((uint32_t)dt.unit.hour * 60) + dt.unit.minute) * 60 + dt.unit.second;
-        clock_display_dozenal_duration(seconds, 0, 1, g_state.time_mode, false);
-        clock_display_dozenal_day(dt);
+        if (g_state.set_time_field >= 3) {
+            watch_display_text_with_fallback(WATCH_POSITION_TOP_LEFT, watch_utility_get_long_weekday(dt), watch_utility_get_weekday(dt));
+            if (g_state.set_time_field == 5 && g_state.blink_state) {
+                watch_display_text(WATCH_POSITION_TOP_RIGHT, "  ");
+            } else {
+                clock_display_dozenal_value(dt.unit.day, 2, 2);
+            }
+
+            uint16_t full_year = dt.unit.year + WATCH_RTC_REFERENCE_YEAR;
+            if (g_state.set_time_field == 3 && g_state.blink_state) {
+                watch_display_text(WATCH_POSITION_BOTTOM, "    ");
+                clock_display_dozenal_value(dt.unit.month, 2, 8);
+            } else if (g_state.set_time_field == 4 && g_state.blink_state) {
+                clock_display_dozenal_value(full_year, 4, 4);
+                watch_display_text(WATCH_POSITION_BOTTOM + 4, "  ");
+            } else {
+                clock_display_dozenal_value(full_year, 4, 4);
+                clock_display_dozenal_value(dt.unit.month, 2, 8);
+            }
+        } else {
+            uint32_t seconds = (((uint32_t)dt.unit.hour * 60) + dt.unit.minute) * 60 + dt.unit.second;
+            clock_display_dozenal_duration(seconds, 0, 1, g_state.time_mode, false);
+            clock_display_dozenal_day(dt);
+        }
     } else {
         watch_set_colon();
         char buf[7];
@@ -496,20 +551,29 @@ static void handle_light_button_press(void) {
         }
         play_beep(button_beep_tune);
     } else if (g_state.app_mode == WATCH_MODE_SET_TIME) {
-        if (g_state.time_mode == TIME_MODE_DIURNAL || g_state.time_mode == TIME_MODE_SEMIDIURNAL) {
-            g_state.set_time_field = (g_state.set_time_field + 1) % 3; // Group 1, Group 2, Group 3
-        } else {
-            g_state.set_time_field = (g_state.set_time_field + 1) % 6;
-        }
+        g_state.set_time_field = (g_state.set_time_field + 1) % 6;
         play_beep(button_beep_tune);
     }
 }
 
 static void advance_alarm_value(void) {
+    if (g_state.time_mode == TIME_MODE_DIURNAL || g_state.time_mode == TIME_MODE_SEMIDIURNAL) {
+        uint32_t semidiurnal_adj = (g_state.time_mode == TIME_MODE_SEMIDIURNAL) ? 2 : 1;
+        uint32_t step = (g_state.alarm_setting_field == 0) ? (7200 / semidiurnal_adj) : (50 / semidiurnal_adj);
+
+        uint32_t alarm_sec = (((uint32_t)g_state.alarm_hour * 60) + g_state.alarm_minute) * 60 + g_state.alarm_second;
+        alarm_sec = (alarm_sec + step) % (24 * 3600);
+        g_state.alarm_hour = alarm_sec / 3600;
+        g_state.alarm_minute = (alarm_sec % 3600) / 60;
+        g_state.alarm_second = alarm_sec % 60;
+        return;
+    }
+
     if (g_state.alarm_setting_field == 0) {
         g_state.alarm_hour = (g_state.alarm_hour + 1) % 24;
     } else {
         g_state.alarm_minute = (g_state.alarm_minute + 1) % 60;
+        g_state.alarm_second = 0;
     }
 }
 
@@ -517,16 +581,18 @@ static void advance_set_time_value(void) {
     if (g_state.time_mode == TIME_MODE_DIURNAL || g_state.time_mode == TIME_MODE_SEMIDIURNAL) {
         uint32_t semidiurnal_adj = (g_state.time_mode == TIME_MODE_SEMIDIURNAL) ? 2 : 1;
         uint32_t step = 0;
-        if (g_state.set_time_field == 0) step = dig1_sec / semidiurnal_adj;       // Group 1: 2 hours (or 1 hour in semidiurnal)
-        else if (g_state.set_time_field == 1) step = dig2_sec / semidiurnal_adj;  // Group 2: 10 mins (or 5 mins in semidiurnal)
-        else if (g_state.set_time_field == 2) step = (uint32_t)(dig4_sec / semidiurnal_adj + 0.5); // Group 3: 4 sec (or 2 sec)
+        if (g_state.set_time_field == 0) step = 7200 / semidiurnal_adj;       // Group 1: 2 hours (or 1 hour in semidiurnal)
+        else if (g_state.set_time_field == 1) step = 50 / semidiurnal_adj;    // Group 2: 50 sec (or 25 sec in semidiurnal)
+        else if (g_state.set_time_field == 2) step = 4 / semidiurnal_adj;     // Group 3: 4 sec (or 2 sec)
 
-        uint32_t cur_sec = (((uint32_t)g_state.setting_dt.unit.hour * 60) + g_state.setting_dt.unit.minute) * 60 + g_state.setting_dt.unit.second;
-        cur_sec = (cur_sec + step) % (24 * 3600);
-        g_state.setting_dt.unit.hour = cur_sec / 3600;
-        g_state.setting_dt.unit.minute = (cur_sec % 3600) / 60;
-        g_state.setting_dt.unit.second = cur_sec % 60;
-        return;
+        if (g_state.set_time_field < 3) {
+            uint32_t cur_sec = (((uint32_t)g_state.setting_dt.unit.hour * 60) + g_state.setting_dt.unit.minute) * 60 + g_state.setting_dt.unit.second;
+            cur_sec = (cur_sec + step) % (24 * 3600);
+            g_state.setting_dt.unit.hour = cur_sec / 3600;
+            g_state.setting_dt.unit.minute = (cur_sec % 3600) / 60;
+            g_state.setting_dt.unit.second = cur_sec % 60;
+            return;
+        }
     }
 
     switch (g_state.set_time_field) {
@@ -634,8 +700,8 @@ static void cb_tick(void) {
     // Check Alarm & Hourly Chime Triggers (ensure single trigger per second 0)
     watch_date_time_t dt = watch_rtc_get_date_time();
 
-    if (dt.unit.second == 0 && (g_state.rtc_tick_counter % g_state.current_tick_freq == 0)) {
-        if (g_state.alarm_enabled && dt.unit.minute != g_state.last_alarm_triggered_minute && dt.unit.hour == g_state.alarm_hour && dt.unit.minute == g_state.alarm_minute) {
+    if ((g_state.rtc_tick_counter % g_state.current_tick_freq == 0)) {
+        if (g_state.alarm_enabled && dt.unit.second == g_state.alarm_second && dt.unit.minute != g_state.last_alarm_triggered_minute && dt.unit.hour == g_state.alarm_hour && dt.unit.minute == g_state.alarm_minute) {
             g_state.last_alarm_triggered_minute = dt.unit.minute;
             play_beep(alarm_tune);
         }
@@ -661,6 +727,7 @@ void app_setup(void) {
     g_state.last_chime_triggered_hour = -1;
     g_state.alarm_setting_active = false;
     g_state.alarm_setting_field = 0;
+    g_state.alarm_second = 0;
     g_state.set_time_field = 0;
     g_state.blink_state = false;
 
