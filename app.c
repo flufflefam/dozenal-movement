@@ -87,7 +87,6 @@ static app_state_t g_state;
 
 // --- Tune Definitions ---
 static int8_t button_beep_tune[] = { BUZZER_NOTE_C7, 2, 0 };
-static int8_t mode_return_tune[] = { BUZZER_NOTE_C8, 3, 0 };
 static int8_t hourly_chime_tune[] = {
     BUZZER_NOTE_C8, 2,
     BUZZER_NOTE_REST, 2,
@@ -507,7 +506,7 @@ static void handle_mode_button_press(void) {
         g_state.alarm_setting_field = 0;
         g_state.set_time_field = 0;
         g_state.blink_state = false;
-        play_beep(mode_return_tune);
+        play_beep(button_beep_tune);
         return;
     }
 
@@ -526,11 +525,7 @@ static void handle_mode_button_press(void) {
         watch_rtc_set_date_time(g_state.setting_dt);
     }
 
-    if (g_state.app_mode == WATCH_MODE_CLOCK) {
-        play_beep(mode_return_tune);
-    } else {
-        play_beep(button_beep_tune);
-    }
+    play_beep(button_beep_tune);
 }
 
 static void handle_light_button_press(void) {
@@ -679,7 +674,6 @@ static void cb_alarm_pin(void) {
             // Pressing ALARM button in Clock mode cycles time display mode on short release
             if (!was_long_press) {
                 g_state.time_mode = (g_state.time_mode + 1) % TIME_MODE_NUM;
-                play_beep(button_beep_tune);
             }
         }
     }
