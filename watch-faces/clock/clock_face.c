@@ -98,9 +98,13 @@ void clock_display_dozenal_duration(uint32_t seconds, uint8_t subsecond, clock_d
     tsec = tsec % (dig3_sec / semidiurnal_adj);
     // leftover subseconds
     tsub = (double)tsec + (double)subsecond / (double)dozenal_tick_frequency;
-    dig4 = tsub / (dig4_sec / semidiurnal_adj);
-    tsub -= dig4 * (dig4_sec / semidiurnal_adj);
-    dig5 = tsub / (dig5_sec / semidiurnal_adj);
+    double step4 = dig4_sec / semidiurnal_adj;
+    double step5 = dig5_sec / semidiurnal_adj;
+    dig4 = (uint8_t)(tsub / step4);
+    if (dig4 > 11) dig4 = 11;
+    tsub -= (double)dig4 * step4;
+    dig5 = (uint8_t)(tsub / step5);
+    if (dig5 > 11) dig5 = 11;
     if (current_display == CLOCK_DISPLAY_DIURNAL) {
         watch_display_character(' ', 4);
         clock_display_dozenal_digit(dig1, 5);

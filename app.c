@@ -170,9 +170,13 @@ static void clock_display_dozenal_duration(uint32_t seconds, uint8_t subsecond, 
     tsec %= (dig3_sec / semidiurnal_adj);
 
     double tsub = (double)tsec + (double)subsecond / (double)(tick_freq ? tick_freq : 1);
-    uint8_t dig4 = tsub / (dig4_sec / semidiurnal_adj);
-    tsub -= dig4 * (dig4_sec / semidiurnal_adj);
-    uint8_t dig5 = tsub / (dig5_sec / semidiurnal_adj);
+    double step4 = dig4_sec / semidiurnal_adj;
+    double step5 = dig5_sec / semidiurnal_adj;
+    uint8_t dig4 = (uint8_t)(tsub / step4);
+    if (dig4 > 11) dig4 = 11;
+    tsub -= (double)dig4 * step4;
+    uint8_t dig5 = (uint8_t)(tsub / step5);
+    if (dig5 > 11) dig5 = 11;
 
     bool group1_blink = false;
     bool group2_blink = false;
