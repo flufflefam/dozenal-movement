@@ -291,26 +291,6 @@ static void update_indicators(void) {
 }
 
 static void render_clock_face(void) {
-    if (g_state.alarm_btn_down) {
-        uint32_t held_ticks = g_state.rtc_tick_counter - g_state.alarm_btn_down_ticks;
-        if (held_ticks >= LONG_PRESS_TICKS) {
-            watch_clear_colon();
-            watch_display_text_with_fallback(WATCH_POSITION_TOP_LEFT, "   ", "  ");
-            watch_display_text(WATCH_POSITION_TOP_RIGHT, "  ");
-
-            static const char scroll_text[] = "      Dozenal Watch      ";
-            uint32_t anim_ticks = held_ticks - LONG_PRESS_TICKS;
-            uint32_t frame = (anim_ticks / 4) % 20;
-
-            char buf[7];
-            memcpy(buf, &scroll_text[frame], 6);
-            buf[6] = '\0';
-
-            watch_display_text(WATCH_POSITION_BOTTOM, buf);
-            return;
-        }
-    }
-
     watch_date_time_t dt = watch_rtc_get_date_time();
 
     if (g_state.time_mode == TIME_MODE_DIURNAL || g_state.time_mode == TIME_MODE_SEMIDIURNAL) {
@@ -336,6 +316,21 @@ static void render_clock_face(void) {
         snprintf(day_str, sizeof(day_str), "%02d", dt.unit.day);
         watch_display_text(WATCH_POSITION_TOP_RIGHT, day_str);
         watch_display_text(WATCH_POSITION_BOTTOM, buf);
+    }
+
+    if (g_state.alarm_btn_down) {
+        uint32_t held_ticks = g_state.rtc_tick_counter - g_state.alarm_btn_down_ticks;
+        if (held_ticks >= LONG_PRESS_TICKS) {
+            static const char scroll_text[] = "      Dozenal Watch      ";
+            uint32_t anim_ticks = held_ticks - LONG_PRESS_TICKS;
+            uint32_t frame = (anim_ticks / 4) % 20;
+
+            char buf[7];
+            memcpy(buf, &scroll_text[frame], 6);
+            buf[6] = '\0';
+
+            watch_display_text(WATCH_POSITION_BOTTOM, buf);
+        }
     }
 }
 
