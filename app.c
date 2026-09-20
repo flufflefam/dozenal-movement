@@ -414,6 +414,10 @@ static void render_app(void) {
 // --- Button Handling & Mode Transitions ---
 
 static void handle_mode_button_press(void) {
+    g_state.alarm_setting_active = false;
+    g_state.alarm_setting_field = 0;
+    g_state.blink_state = false;
+
     if (g_state.quick_return_to_clock && (g_state.app_mode == WATCH_MODE_ALARM || g_state.app_mode == WATCH_MODE_STOPWATCH)) {
         g_state.app_mode = WATCH_MODE_CLOCK;
         g_state.quick_return_to_clock = false;
@@ -430,6 +434,7 @@ static void handle_mode_button_press(void) {
         g_state.set_time_field = 0;
     } else if (prev_mode == WATCH_MODE_SET_TIME) {
         watch_rtc_set_date_time(g_state.setting_dt);
+        g_state.set_time_field = 0;
     }
 
     if (g_state.app_mode == WATCH_MODE_CLOCK) {

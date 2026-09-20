@@ -193,7 +193,10 @@ void alarm_face_activate(void *context) {
     state->alarm_button_repeat_advanced = false;
 }
 void alarm_face_resign(void *context) {
-    (void) context;
+    alarm_face_state_t *state = (alarm_face_state_t *)context;
+    if (state != NULL) {
+        state->setting_mode = ALARM_FACE_SETTING_MODE_NONE;
+    }
 }
 
 bool alarm_face_loop(movement_event_t event, void *context) {
